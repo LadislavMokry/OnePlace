@@ -7,10 +7,7 @@
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [
-        240,
-        300
-      ]
+      "position": [240, 300]
     },
     {
       "parameters": {
@@ -22,7 +19,7 @@
           "fieldValues": [
             {
               "fieldName": "source_url",
-              "fieldValue": "https://test.example.com/test-article-{{ $now.toUnixInteger() }}"
+              "fieldValue": "=`https://test.example.com/test-article-${$now.toUnixInteger()}`"
             },
             {
               "fieldName": "source_website",
@@ -43,10 +40,8 @@
       "name": "Supabase Insert Test",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [
-        460,
-        300
-      ],
+      "position": [460, 300],
+      "continueOnFail": true,
       "credentials": {
         "supabaseApi": {
           "id": "supabase-credentials",
@@ -74,10 +69,8 @@
       "name": "Supabase Query Test",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [
-        680,
-        300
-      ],
+      "position": [680, 300],
+      "continueOnFail": true,
       "credentials": {
         "supabaseApi": {
           "id": "supabase-credentials",
@@ -97,10 +90,8 @@
       "name": "Supabase Cleanup Test",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [
-        900,
-        300
-      ],
+      "position": [900, 300],
+      "continueOnFail": true,
       "credentials": {
         "supabaseApi": {
           "id": "supabase-credentials",

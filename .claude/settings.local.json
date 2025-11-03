@@ -10,7 +10,8 @@
       "Bash(findstr:*)",
       "Bash(rm:*)",
       "Bash(git clone:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(del temp-workflow-update.json)"
     ],
     "deny": [],
     "ask": []
