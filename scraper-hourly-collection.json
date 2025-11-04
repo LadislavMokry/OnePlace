@@ -654,7 +654,8 @@
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "IF - Check Cas Status": {
@@ -665,7 +666,8 @@
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "IF - Check Pluska Status": {
@@ -676,7 +678,8 @@
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "IF - Check Refresher Status": {
@@ -687,7 +690,8 @@
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "IF - Check Startitup Status": {
@@ -698,7 +702,8 @@
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     }
   },
