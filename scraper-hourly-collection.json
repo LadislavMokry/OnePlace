@@ -592,7 +592,8 @@
       "parameters": {
         "mode": "append",
         "mergeByFields": {},
-        "options": {}
+        "options": {},
+        "numberInputs": 5
       },
       "id": "merge-all-results",
       "name": "Merge All Results",

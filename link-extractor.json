@@ -80,7 +80,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Flatten all extracted URLs from all items into a single array\nconst allUrls = [];\n\nfor (const item of $input.all()) {\n  const urls = item.json.extracted_urls || [];\n  allUrls.push(...urls);\n}\n\n// Return as individual items for batch insert\nreturn allUrls.map(urlData => ({ json: urlData }));"
+        "jsCode": "// Collect all URLs from the extracted_urls arrays\nconst allUrls = [];\n\nfor (const item of $input.all()) {\n  if (item.json.extracted_urls && Array.isArray(item.json.extracted_urls)) {\n    // Push each URL object from the array\n    allUrls.push(...item.json.extracted_urls);\n  }\n}\n\n// Return each URL as a separate item\nreturn allUrls.map(urlData => ({ json: urlData }));"
       },
       "id": "d4e5f6a7-b8c9-4d5e-1f2a-3b4c5d6e7f8a",
       "name": "Prepare Batch Insert",
@@ -92,7 +92,23 @@
       "parameters": {
         "operation": "create",
         "tableId": "article_urls",
-        "dataMode": "autoMapInputData",
+        "dataMode": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "article_url",
+              "fieldValue": "={{ $json.article_url }}"
+            },
+            {
+              "fieldId": "source_website",
+              "fieldValue": "={{ $json.source_website }}"
+            },
+            {
+              "fieldId": "category_page_id",
+              "fieldValue": "={{ $json.category_page_id }}"
+            }
+          ]
+        },
         "options": {
           "queryName": "upsert"
         }

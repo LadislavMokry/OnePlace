@@ -73,6 +73,19 @@ Performance Tracking (feedback loop)
 **Scraping**: Schedule Trigger (cron: `0 * * * *`) → HTTP Request nodes per website → IF nodes for error handling
 
 **Database Operations**: Use Supabase node for CRUD, Postgres node for complex queries
+- **CRITICAL**: NEVER use `dataMode: "autoMapInputData"` in Supabase nodes - it fails to map fields correctly
+- ALWAYS use `dataMode: "defineBelow"` with explicit field mappings using `fieldsUi.fieldValues`
+- Example:
+  ```json
+  {
+    "dataMode": "defineBelow",
+    "fieldsUi": {
+      "fieldValues": [
+        {"fieldId": "column_name", "fieldValue": "={{ $json.field_name }}"}
+      ]
+    }
+  }
+  ```
 
 **LLM Calls**: OpenAI/Anthropic/Google Gemini nodes with:
 - System prompts for context
