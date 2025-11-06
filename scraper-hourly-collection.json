@@ -388,6 +388,7 @@
         "resource": "row",
         "operation": "get",
         "tableId": "category_pages",
+        "returnAll": true,
         "filterType": "manual",
         "matchType": "anyFilter",
         "filtersUI": {
@@ -419,6 +420,7 @@
         "resource": "row",
         "operation": "get",
         "tableId": "category_pages",
+        "returnAll": true,
         "filterType": "manual",
         "matchType": "anyFilter",
         "filtersUI": {
@@ -450,6 +452,7 @@
         "resource": "row",
         "operation": "get",
         "tableId": "category_pages",
+        "returnAll": true,
         "filterType": "manual",
         "matchType": "anyFilter",
         "filtersUI": {
@@ -481,6 +484,7 @@
         "resource": "row",
         "operation": "get",
         "tableId": "category_pages",
+        "returnAll": true,
         "filterType": "manual",
         "matchType": "anyFilter",
         "filtersUI": {
@@ -512,6 +516,7 @@
         "resource": "row",
         "operation": "get",
         "tableId": "category_pages",
+        "returnAll": true,
         "filterType": "manual",
         "matchType": "anyFilter",
         "filtersUI": {
