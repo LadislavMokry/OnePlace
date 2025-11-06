@@ -385,215 +385,110 @@
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {
-          "queryName": "upsert"
+        "operation": "executeQuery",
+        "query": "INSERT INTO category_pages (source_url, source_website, raw_html, scraped_at)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (source_url) \nDO UPDATE SET \n  source_website = EXCLUDED.source_website,\n  raw_html = EXCLUDED.raw_html,\n  scraped_at = EXCLUDED.scraped_at,\n  processed = FALSE\nRETURNING *;",
+        "additionalFields": {
+          "mode": "independently",
+          "queryParams": "={{ $json.source_url }},={{ $json.source_website }},={{ $json.raw_html }},={{ $now }}"
         }
       },
       "id": "supabase-topky",
-      "name": "Supabase Insert - Topky",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "name": "Postgres Upsert - Topky",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
       "position": [850, 100],
       "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "1",
+          "name": "Supabase Postgres"
         }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {
-          "queryName": "upsert"
+        "operation": "executeQuery",
+        "query": "INSERT INTO category_pages (source_url, source_website, raw_html, scraped_at)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (source_url) \nDO UPDATE SET \n  source_website = EXCLUDED.source_website,\n  raw_html = EXCLUDED.raw_html,\n  scraped_at = EXCLUDED.scraped_at,\n  processed = FALSE\nRETURNING *;",
+        "additionalFields": {
+          "mode": "independently",
+          "queryParams": "={{ $json.source_url }},={{ $json.source_website }},={{ $json.raw_html }},={{ $now }}"
         }
       },
       "id": "supabase-cas",
-      "name": "Supabase Insert - Cas",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "name": "Postgres Upsert - Cas",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
       "position": [850, 250],
       "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "1",
+          "name": "Supabase Postgres"
         }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {
-          "queryName": "upsert"
+        "operation": "executeQuery",
+        "query": "INSERT INTO category_pages (source_url, source_website, raw_html, scraped_at)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (source_url) \nDO UPDATE SET \n  source_website = EXCLUDED.source_website,\n  raw_html = EXCLUDED.raw_html,\n  scraped_at = EXCLUDED.scraped_at,\n  processed = FALSE\nRETURNING *;",
+        "additionalFields": {
+          "mode": "independently",
+          "queryParams": "={{ $json.source_url }},={{ $json.source_website }},={{ $json.raw_html }},={{ $now }}"
         }
       },
       "id": "supabase-pluska",
-      "name": "Supabase Insert - Pluska",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "name": "Postgres Upsert - Pluska",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
       "position": [850, 400],
       "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "1",
+          "name": "Supabase Postgres"
         }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {
-          "queryName": "upsert"
+        "operation": "executeQuery",
+        "query": "INSERT INTO category_pages (source_url, source_website, raw_html, scraped_at)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (source_url) \nDO UPDATE SET \n  source_website = EXCLUDED.source_website,\n  raw_html = EXCLUDED.raw_html,\n  scraped_at = EXCLUDED.scraped_at,\n  processed = FALSE\nRETURNING *;",
+        "additionalFields": {
+          "mode": "independently",
+          "queryParams": "={{ $json.source_url }},={{ $json.source_website }},={{ $json.raw_html }},={{ $now }}"
         }
       },
       "id": "supabase-refresher",
-      "name": "Supabase Insert - Refresher",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "name": "Postgres Upsert - Refresher",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
       "position": [850, 550],
       "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "1",
+          "name": "Supabase Postgres"
         }
       },
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {
-          "queryName": "upsert"
+        "operation": "executeQuery",
+        "query": "INSERT INTO category_pages (source_url, source_website, raw_html, scraped_at)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (source_url) \nDO UPDATE SET \n  source_website = EXCLUDED.source_website,\n  raw_html = EXCLUDED.raw_html,\n  scraped_at = EXCLUDED.scraped_at,\n  processed = FALSE\nRETURNING *;",
+        "additionalFields": {
+          "mode": "independently",
+          "queryParams": "={{ $json.source_url }},={{ $json.source_website }},={{ $json.raw_html }},={{ $now }}"
         }
       },
       "id": "supabase-startitup",
-      "name": "Supabase Insert - Startitup",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "name": "Postgres Upsert - Startitup",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
       "position": [850, 700],
       "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
+        "postgres": {
+          "id": "1",
+          "name": "Supabase Postgres"
         }
       },
       "onError": "continueRegularOutput"
@@ -722,7 +617,7 @@
       "main": [
         [
           {
-            "node": "Supabase Insert - Topky",
+            "node": "Postgres Upsert - Topky",
             "type": "main",
             "index": 0
           }
@@ -733,7 +628,7 @@
       "main": [
         [
           {
-            "node": "Supabase Insert - Cas",
+            "node": "Postgres Upsert - Cas",
             "type": "main",
             "index": 0
           }
@@ -744,7 +639,7 @@
       "main": [
         [
           {
-            "node": "Supabase Insert - Pluska",
+            "node": "Postgres Upsert - Pluska",
             "type": "main",
             "index": 0
           }
@@ -755,7 +650,7 @@
       "main": [
         [
           {
-            "node": "Supabase Insert - Refresher",
+            "node": "Postgres Upsert - Refresher",
             "type": "main",
             "index": 0
           }
@@ -766,14 +661,14 @@
       "main": [
         [
           {
-            "node": "Supabase Insert - Startitup",
+            "node": "Postgres Upsert - Startitup",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Supabase Insert - Topky": {
+    "Postgres Upsert - Topky": {
       "main": [
         [
           {
@@ -784,7 +679,7 @@
         ]
       ]
     },
-    "Supabase Insert - Cas": {
+    "Postgres Upsert - Cas": {
       "main": [
         [
           {
@@ -795,7 +690,7 @@
         ]
       ]
     },
-    "Supabase Insert - Pluska": {
+    "Postgres Upsert - Pluska": {
       "main": [
         [
           {
@@ -806,7 +701,7 @@
         ]
       ]
     },
-    "Supabase Insert - Refresher": {
+    "Postgres Upsert - Refresher": {
       "main": [
         [
           {
@@ -817,7 +712,7 @@
         ]
       ]
     },
-    "Supabase Insert - Startitup": {
+    "Postgres Upsert - Startitup": {
       "main": [
         [
           {

@@ -72,20 +72,31 @@ Performance Tracking (feedback loop)
 
 **Scraping**: Schedule Trigger (cron: `0 * * * *`) → HTTP Request nodes per website → IF nodes for error handling
 
-**Database Operations**: Use Supabase node for CRUD, Postgres node for complex queries
+**Database Operations**: Use Supabase node for simple CRUD, Postgres node for upsert and complex queries
 - **CRITICAL**: NEVER use `dataMode: "autoMapInputData"` in Supabase nodes - it fails to map fields correctly
 - ALWAYS use `dataMode: "defineBelow"` with explicit field mappings using `fieldsUi.fieldValues`
-- Example:
+- **UPSERT Operations**: Supabase node does NOT support upsert - use Postgres node instead:
   ```json
   {
-    "dataMode": "defineBelow",
-    "fieldsUi": {
-      "fieldValues": [
-        {"fieldId": "column_name", "fieldValue": "={{ $json.field_name }}"}
-      ]
+    "type": "n8n-nodes-base.postgres",
+    "parameters": {
+      "operation": "executeQuery",
+      "query": "INSERT INTO table_name (col1, col2, col3)\nVALUES ($1, $2, $3)\nON CONFLICT (unique_col) \nDO UPDATE SET \n  col2 = EXCLUDED.col2,\n  col3 = EXCLUDED.col3\nRETURNING *;",
+      "additionalFields": {
+        "mode": "independently",
+        "queryParams": "={{ $json.field1 }},={{ $json.field2 }},={{ $json.field3 }}"
+      }
+    },
+    "credentials": {
+      "postgres": {
+        "id": "1",
+        "name": "Supabase Postgres"
+      }
     }
   }
   ```
+- Postgres node connects to same Supabase database via direct PostgreSQL connection (not REST API)
+- See `POSTGRES-CREDENTIAL-SETUP.md` for credential configuration instructions
 
 **LLM Calls**: OpenAI/Anthropic/Google Gemini nodes with:
 - System prompts for context
