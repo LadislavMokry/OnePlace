@@ -7,7 +7,10 @@
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -29,10 +32,13 @@
       "name": "Get Unprocessed Pages",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "credentials": {
         "supabaseApi": {
-          "id": "1",
+          "id": "woAUTvWByiJ9u8p2",
           "name": "Supabase account"
         }
       }
@@ -40,13 +46,16 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Regex patterns for each Slovak news site\nconst patterns = {\n  'topky.sk': /href=[\"']?(https?:\\/\\/novinky\\.zoznam\\.sk\\/cl\\/\\d+\\/\\d+\\/[^\"'\\s<>?#]+)/gi,\n  'cas.sk': /href=[\"']?(https?:\\/\\/(?:www\\.)?cas\\.sk\\/[a-z-]+\\/[^\"'\\s<>?#]+)/gi,\n  'pluska.sk': /href=[\"']?(https?:\\/\\/[a-z0-9]+\\.pluska\\.sk\\/[a-z-]+\\/[a-z-]+\\/[^\"'\\s<>?#]+)/gi,\n  'refresher.sk': /href=[\"']?(https?:\\/\\/(?:www\\.)?refresher\\.sk\\/\\d+-[^\"'\\s<>?#]+)/gi,\n  'startitup.sk': /href=[\"']?(https?:\\/\\/(?:www\\.)?startitup\\.sk\\/(?!kategoria|autor|tag|static|wp-)[a-z0-9-]+\\/?)/gi\n};\n\nconst item = $input.item.json;\nconst sourceWebsite = item.source_website;\nconst rawHtml = item.raw_html;\nconst categoryPageId = item.id;\n\n// Get the appropriate regex pattern\nconst pattern = patterns[sourceWebsite];\n\nif (!pattern) {\n  throw new Error(`No regex pattern defined for: ${sourceWebsite}`);\n}\n\nif (!rawHtml) {\n  return {\n    json: {\n      category_page_id: categoryPageId,\n      source_website: sourceWebsite,\n      extracted_urls: [],\n      error: 'No raw_html found'\n    }\n  };\n}\n\n// Extract all matching URLs\nconst matches = [];\nlet match;\n\nwhile ((match = pattern.exec(rawHtml)) !== null) {\n  const url = match[1];\n  // Deduplicate within this extraction\n  if (!matches.includes(url)) {\n    matches.push(url);\n  }\n}\n\n// Return structured data for each URL\nconst extractedUrls = matches.map(url => ({\n  article_url: url,\n  source_website: sourceWebsite,\n  category_page_id: categoryPageId\n}));\n\nreturn {\n  json: {\n    category_page_id: categoryPageId,\n    source_website: sourceWebsite,\n    extracted_urls: extractedUrls,\n    total_found: extractedUrls.length\n  }\n};"
+        "jsCode": "// Extract article URLs from category page HTML (hrefs + embedded URLs)\nconst siteConfig = {\n  'topky.sk': {\n    base: 'https://www.topky.sk',\n    allow: [/https?:\\/\\/(?:www\\.)?topky\\.sk\\/clanok\\/\\d+\\/[^\"'\\s<>?#]+/i],\n    extract: [/https?:\\/\\/(?:www\\.)?topky\\.sk\\/clanok\\/\\d+\\/[^\"'\\s<>?#]+/gi]\n  },\n  'cas.sk': {\n    base: 'https://www.cas.sk',\n    allow: [/https?:\\/\\/(?:www\\.)?cas\\.sk\\/(?:premium\\/)?prominenti\\/[^\"'\\s<>?#]+/i],\n    extract: [/https?:\\/\\/(?:www\\.)?cas\\.sk\\/(?:premium\\/)?prominenti\\/[^\"'\\s<>?#]+/gi]\n  },\n  'pluska.sk': {\n    base: 'https://www1.pluska.sk',\n    allow: [/https?:\\/\\/(?:www\\d*\\.)?pluska\\.sk\\/[^\"'\\s<>?#]+/i],\n    extract: [/https?:\\/\\/(?:www\\d*\\.)?pluska\\.sk\\/[^\"'\\s<>?#]+/gi],\n    deny: [/\\/cookie/i, /\\/predplatne/i]\n  },\n  'refresher.sk': {\n    base: 'https://refresher.sk',\n    allow: [/https?:\\/\\/refresher\\.sk\\/\\d+[^\"'\\s<>?#]+/i],\n    extract: [/https?:\\/\\/refresher\\.sk\\/\\d+[^\"'\\s<>?#]+/gi]\n  },\n  'startitup.sk': {\n    base: 'https://www.startitup.sk',\n    allow: [/https?:\\/\\/(?:www\\.)?startitup\\.sk\\/(?!kategoria|autor|tag|wp-|wp-content|videa|video|feed)[^\"'\\s<>?#]+/i],\n    extract: [/https?:\\/\\/(?:www\\.)?startitup\\.sk\\/[^\"'\\s<>?#]+/gi],\n    deny: [/\\/wp-content/i, /\\/kategoria/i, /\\/videa/i, /\\/video/i, /\\/feed\\//i, /#/] \n  }\n};\n\nconst item = $input.item.json;\nconst sourceWebsite = item.source_website;\nconst rawHtml = item.raw_html || '';\nconst categoryPageId = item.id;\n\nconst cfg = siteConfig[sourceWebsite];\nif (!cfg) {\n  throw new Error('No regex pattern defined for: ' + sourceWebsite);\n}\n\nif (!rawHtml) {\n  return {\n    json: {\n      category_page_id: categoryPageId,\n      source_website: sourceWebsite,\n      extracted_urls: [],\n      total_found: 0,\n      error: 'No raw_html found'\n    }\n  };\n}\n\nconst urls = new Set();\n\nfunction shouldKeep(url) {\n  if (cfg.allow && !cfg.allow.some((re) => re.test(url))) return false;\n  if (cfg.deny && cfg.deny.some((re) => re.test(url))) return false;\n  return true;\n}\n\n// 1) href attributes\nconst hrefRegex = /href=[\"']([^\"'#]+)[\"']/gi;\nlet match;\nwhile ((match = hrefRegex.exec(rawHtml)) !== null) {\n  const href = match[1];\n  if (!href) continue;\n  if (href.startsWith('mailto:') || href.startsWith('javascript:') || href.startsWith('#')) continue;\n\n  let absolute;\n  try {\n    absolute = href.startsWith('http') ? href : new URL(href, cfg.base).toString();\n  } catch (e) {\n    continue;\n  }\n\n  if (shouldKeep(absolute)) urls.add(absolute.split('#')[0]);\n}\n\n// 2) embedded URLs (also unescape JSON-style slashes)\nconst normalized = rawHtml.replace(/\\\\//g, '/');\nconst sourcesToScan = [rawHtml, normalized];\n\nfor (const text of sourcesToScan) {\n  for (const re of cfg.extract || []) {\n    const matches = text.match(re) || [];\n    for (let u of matches) {\n      if (!u) continue;\n      if (shouldKeep(u)) urls.add(u.split('#')[0]);\n    }\n  }\n}\n\nconst extractedUrls = Array.from(urls).map((url) => ({\n  article_url: url,\n  source_website: sourceWebsite,\n  category_page_id: categoryPageId\n}));\n\nreturn {\n  json: {\n    category_page_id: categoryPageId,\n    source_website: sourceWebsite,\n    extracted_urls: extractedUrls,\n    total_found: extractedUrls.length\n  }\n};\n"
       },
       "id": "b2c3d4e5-f6a7-4b5c-9d0e-1f2a3b4c5d6e",
       "name": "Extract Article URLs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -75,7 +84,10 @@
       "name": "Check URLs Found",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [900, 300]
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
@@ -86,7 +98,10 @@
       "name": "Prepare Batch Insert",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 200]
+      "position": [
+        1120,
+        200
+      ]
     },
     {
       "parameters": {
@@ -117,10 +132,13 @@
       "name": "Insert Article URLs",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1340, 200],
+      "position": [
+        1340,
+        200
+      ],
       "credentials": {
         "supabaseApi": {
-          "id": "1",
+          "id": "woAUTvWByiJ9u8p2",
           "name": "Supabase account"
         }
       },
@@ -135,7 +153,10 @@
       "name": "Get Processed IDs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 200]
+      "position": [
+        1560,
+        200
+      ]
     },
     {
       "parameters": {
@@ -165,28 +186,16 @@
       "name": "Mark Pages Processed",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1780, 200],
+      "position": [
+        1780,
+        200
+      ],
       "credentials": {
         "supabaseApi": {
-          "id": "1",
+          "id": "woAUTvWByiJ9u8p2",
           "name": "Supabase account"
         }
       }
-    },
-    {
-      "parameters": {
-        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
-        "method": "POST",
-        "sendBody": true,
-        "contentType": "json",
-        "jsonBody": "={\n  \"content\": \"✅ **Link Extraction Complete**\",\n  \"embeds\": [{\n    \"title\": \"Sub-Workflow 1B: Link Extractor\",\n    \"description\": \"Successfully extracted article URLs from category pages.\",\n    \"color\": 3066993,\n    \"fields\": [\n      {\n        \"name\": \"Total URLs Extracted\",\n        \"value\": \"{{ $('Insert Article URLs').itemMatching(0).json.length || 0 }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Pages Processed\",\n        \"value\": \"{{ $('Get Processed IDs').all().length }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Timestamp\",\n        \"value\": \"{{ $now.toISO() }}\",\n        \"inline\": false\n      }\n    ]\n  }]\n}",
-        "options": {}
-      },
-      "id": "b8c9d0e1-f2a3-4b5c-5d6e-7f8a9b0c1d2e",
-      "name": "Success Notification",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [2000, 200]
     },
     {
       "parameters": {
@@ -197,22 +206,10 @@
       "name": "Log No URLs Found",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 400]
-    },
-    {
-      "parameters": {
-        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
-        "method": "POST",
-        "sendBody": true,
-        "contentType": "json",
-        "jsonBody": "={\n  \"content\": \"⚠️ **Link Extraction Warning**\",\n  \"embeds\": [{\n    \"title\": \"Sub-Workflow 1B: No URLs Found\",\n    \"description\": \"No article URLs were extracted from category pages. This may indicate:\n- Empty raw_html fields\n- Regex patterns not matching\n- All pages already processed\",\n    \"color\": 16776960,\n    \"fields\": [\n      {\n        \"name\": \"Summary\",\n        \"value\": \"{{ $json.summary }}\",\n        \"inline\": false\n      },\n      {\n        \"name\": \"Timestamp\",\n        \"value\": \"{{ $now.toISO() }}\",\n        \"inline\": false\n      }\n    ]\n  }]\n}",
-        "options": {}
-      },
-      "id": "d0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a",
-      "name": "Warning Notification",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [1340, 400]
+      "position": [
+        1120,
+        400
+      ]
     },
     {
       "parameters": {
@@ -223,22 +220,10 @@
       "name": "Error Trigger",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
-      "position": [240, 520]
-    },
-    {
-      "parameters": {
-        "url": "={{ $env.DISCORD_WEBHOOK_URL }}",
-        "method": "POST",
-        "sendBody": true,
-        "contentType": "json",
-        "jsonBody": "={\n  \"content\": \"🚨 **Link Extraction Failed**\",\n  \"embeds\": [{\n    \"title\": \"Sub-Workflow 1B: Error\",\n    \"description\": \"An error occurred during link extraction.\",\n    \"color\": 15158332,\n    \"fields\": [\n      {\n        \"name\": \"Error Message\",\n        \"value\": \"{{ $json.error.message || 'Unknown error' }}\",\n        \"inline\": false\n      },\n      {\n        \"name\": \"Node\",\n        \"value\": \"{{ $json.error.node || 'Unknown' }}\",\n        \"inline\": true\n      },\n      {\n        \"name\": \"Timestamp\",\n        \"value\": \"{{ $now.toISO() }}\",\n        \"inline\": true\n      }\n    ]\n  }]\n}",
-        "options": {}
-      },
-      "id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
-      "name": "Error Notification",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [460, 520]
+      "position": [
+        240,
+        520
+      ]
     }
   ],
   "connections": {
@@ -327,37 +312,13 @@
       ]
     },
     "Mark Pages Processed": {
-      "main": [
-        [
-          {
-            "node": "Success Notification",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": []
     },
     "Log No URLs Found": {
-      "main": [
-        [
-          {
-            "node": "Warning Notification",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": []
     },
     "Error Trigger": {
-      "main": [
-        [
-          {
-            "node": "Error Notification",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": []
     }
   },
   "pinData": {},

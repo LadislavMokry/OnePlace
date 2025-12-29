@@ -16,7 +16,10 @@
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [250, 300]
+      "position": [
+        250,
+        300
+      ]
     },
     {
       "parameters": {
@@ -55,7 +58,10 @@
       "name": "HTTP Request - Topky",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [450, 100],
+      "position": [
+        450,
+        100
+      ],
       "onError": "continueRegularOutput"
     },
     {
@@ -95,7 +101,10 @@
       "name": "HTTP Request - Cas",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [450, 400],
+      "position": [
+        450,
+        400
+      ],
       "onError": "continueRegularOutput"
     },
     {
@@ -135,7 +144,10 @@
       "name": "HTTP Request - Pluska",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [450, 700],
+      "position": [
+        450,
+        700
+      ],
       "onError": "continueRegularOutput"
     },
     {
@@ -175,7 +187,10 @@
       "name": "HTTP Request - Refresher",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [450, 1000],
+      "position": [
+        450,
+        1000
+      ],
       "onError": "continueRegularOutput"
     },
     {
@@ -215,7 +230,10 @@
       "name": "HTTP Request - Startitup",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [450, 1300],
+      "position": [
+        450,
+        1300
+      ],
       "onError": "continueRegularOutput"
     },
     {
@@ -249,7 +267,10 @@
       "name": "Set - Topky Data",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [650, 100]
+      "position": [
+        650,
+        100
+      ]
     },
     {
       "parameters": {
@@ -282,7 +303,10 @@
       "name": "Set - Cas Data",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [650, 400]
+      "position": [
+        650,
+        400
+      ]
     },
     {
       "parameters": {
@@ -315,7 +339,10 @@
       "name": "Set - Pluska Data",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [650, 700]
+      "position": [
+        650,
+        700
+      ]
     },
     {
       "parameters": {
@@ -348,7 +375,10 @@
       "name": "Set - Refresher Data",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [650, 1000]
+      "position": [
+        650,
+        1000
+      ]
     },
     {
       "parameters": {
@@ -381,747 +411,215 @@
       "name": "Set - Startitup Data",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [650, 1300]
+      "position": [
+        650,
+        1300
+      ]
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "get",
-        "tableId": "category_pages",
-        "returnAll": true,
-        "filterType": "manual",
-        "matchType": "anyFilter",
-        "filtersUI": {
-          "filterValues": [
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/category_pages?on_conflict=source_url",
+        "method": "POST",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "key": "source_url",
-              "condition": "is",
-              "value": "={{ $json.source_url }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "get-topky",
-      "name": "Check Exists - Topky",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [850, 100],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "get",
-        "tableId": "category_pages",
-        "returnAll": true,
-        "filterType": "manual",
-        "matchType": "anyFilter",
-        "filtersUI": {
-          "filterValues": [
-            {
-              "key": "source_url",
-              "condition": "is",
-              "value": "={{ $json.source_url }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "get-cas",
-      "name": "Check Exists - Cas",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [850, 400],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "get",
-        "tableId": "category_pages",
-        "returnAll": true,
-        "filterType": "manual",
-        "matchType": "anyFilter",
-        "filtersUI": {
-          "filterValues": [
-            {
-              "key": "source_url",
-              "condition": "is",
-              "value": "={{ $json.source_url }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "get-pluska",
-      "name": "Check Exists - Pluska",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [850, 700],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "get",
-        "tableId": "category_pages",
-        "returnAll": true,
-        "filterType": "manual",
-        "matchType": "anyFilter",
-        "filtersUI": {
-          "filterValues": [
-            {
-              "key": "source_url",
-              "condition": "is",
-              "value": "={{ $json.source_url }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "get-refresher",
-      "name": "Check Exists - Refresher",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [850, 1000],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "get",
-        "tableId": "category_pages",
-        "returnAll": true,
-        "filterType": "manual",
-        "matchType": "anyFilter",
-        "filtersUI": {
-          "filterValues": [
-            {
-              "key": "source_url",
-              "condition": "is",
-              "value": "={{ $json.source_url }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "get-startitup",
-      "name": "Check Exists - Startitup",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [850, 1300],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "exists-check",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "exists",
-                "operation": "exists",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "if-topky",
-      "name": "IF Exists - Topky",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1050, 100]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "exists-check",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "exists",
-                "operation": "exists",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "if-cas",
-      "name": "IF Exists - Cas",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1050, 400]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "exists-check",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "exists",
-                "operation": "exists",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "if-pluska",
-      "name": "IF Exists - Pluska",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1050, 700]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "exists-check",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "exists",
-                "operation": "exists",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "if-refresher",
-      "name": "IF Exists - Refresher",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1050, 1000]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "exists-check",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "exists",
-                "operation": "exists",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "if-startitup",
-      "name": "IF Exists - Startitup",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [1050, 1300]
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "update",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "updateByFields": {
-          "updateByFields": [
-            {
-              "column": "id",
-              "value": "={{ $json.id }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Topky Data').item.json.raw_html }}"
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_KEY }}"
             },
             {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
+              "name": "Authorization",
+              "value": "={{ `Bearer ${$env.SUPABASE_KEY}` }}"
             },
             {
-              "fieldId": "processed",
-              "fieldValue": "false"
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
             }
           ]
         },
-        "options": {}
-      },
-      "id": "update-topky",
-      "name": "Update - Topky",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 50],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $('Set - Topky Data').item.json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $('Set - Topky Data').item.json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Topky Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {}
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { source_url: $json.source_url, source_website: $json.source_website, raw_html: $json.raw_html, scraped_at: $now, processed: false } }}"
       },
       "id": "insert-topky",
-      "name": "Insert - Topky",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 150],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
+      "name": "Upsert - Topky",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1250,
+        150
+      ],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "update",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "updateByFields": {
-          "updateByFields": [
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/category_pages?on_conflict=source_url",
+        "method": "POST",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "column": "id",
-              "value": "={{ $json.id }}"
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ `Bearer ${$env.SUPABASE_KEY}` }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
             }
           ]
         },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Cas Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            },
-            {
-              "fieldId": "processed",
-              "fieldValue": "false"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "update-cas",
-      "name": "Update - Cas",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 350],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $('Set - Cas Data').item.json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $('Set - Cas Data').item.json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Cas Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {}
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { source_url: $json.source_url, source_website: $json.source_website, raw_html: $json.raw_html, scraped_at: $now, processed: false } }}"
       },
       "id": "insert-cas",
-      "name": "Insert - Cas",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 450],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
+      "name": "Upsert - Cas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1250,
+        450
+      ],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "update",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "updateByFields": {
-          "updateByFields": [
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/category_pages?on_conflict=source_url",
+        "method": "POST",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "column": "id",
-              "value": "={{ $json.id }}"
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ `Bearer ${$env.SUPABASE_KEY}` }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
             }
           ]
         },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Pluska Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            },
-            {
-              "fieldId": "processed",
-              "fieldValue": "false"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "update-pluska",
-      "name": "Update - Pluska",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 650],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $('Set - Pluska Data').item.json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $('Set - Pluska Data').item.json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Pluska Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {}
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { source_url: $json.source_url, source_website: $json.source_website, raw_html: $json.raw_html, scraped_at: $now, processed: false } }}"
       },
       "id": "insert-pluska",
-      "name": "Insert - Pluska",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 750],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
+      "name": "Upsert - Pluska",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1250,
+        750
+      ],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "update",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "updateByFields": {
-          "updateByFields": [
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/category_pages?on_conflict=source_url",
+        "method": "POST",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "column": "id",
-              "value": "={{ $json.id }}"
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ `Bearer ${$env.SUPABASE_KEY}` }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
             }
           ]
         },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Refresher Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            },
-            {
-              "fieldId": "processed",
-              "fieldValue": "false"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "update-refresher",
-      "name": "Update - Refresher",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 950],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $('Set - Refresher Data').item.json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $('Set - Refresher Data').item.json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Refresher Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {}
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { source_url: $json.source_url, source_website: $json.source_website, raw_html: $json.raw_html, scraped_at: $now, processed: false } }}"
       },
       "id": "insert-refresher",
-      "name": "Insert - Refresher",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 1050],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
+      "name": "Upsert - Refresher",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1250,
+        1050
+      ],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "resource": "row",
-        "operation": "update",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "updateByFields": {
-          "updateByFields": [
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/category_pages?on_conflict=source_url",
+        "method": "POST",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "column": "id",
-              "value": "={{ $json.id }}"
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ `Bearer ${$env.SUPABASE_KEY}` }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=minimal"
             }
           ]
         },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Startitup Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            },
-            {
-              "fieldId": "processed",
-              "fieldValue": "false"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "update-startitup",
-      "name": "Update - Startitup",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 1250],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "resource": "row",
-        "operation": "create",
-        "tableId": "category_pages",
-        "dataMode": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "source_url",
-              "fieldValue": "={{ $('Set - Startitup Data').item.json.source_url }}"
-            },
-            {
-              "fieldId": "source_website",
-              "fieldValue": "={{ $('Set - Startitup Data').item.json.source_website }}"
-            },
-            {
-              "fieldId": "raw_html",
-              "fieldValue": "={{ $('Set - Startitup Data').item.json.raw_html }}"
-            },
-            {
-              "fieldId": "scraped_at",
-              "fieldValue": "={{ $now }}"
-            }
-          ]
-        },
-        "options": {}
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ { source_url: $json.source_url, source_website: $json.source_website, raw_html: $json.raw_html, scraped_at: $now, processed: false } }}"
       },
       "id": "insert-startitup",
-      "name": "Insert - Startitup",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [1250, 1350],
-      "credentials": {
-        "supabaseApi": {
-          "id": "woAUTvWByiJ9u8p2",
-          "name": "Supabase account"
-        }
-      },
-      "onError": "continueRegularOutput"
+      "name": "Upsert - Startitup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1250,
+        1350
+      ],
+      "onError": "continueRegularOutput",
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -1134,7 +632,10 @@
       "name": "Merge - Topky",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [1450, 100]
+      "position": [
+        1450,
+        100
+      ]
     },
     {
       "parameters": {
@@ -1147,7 +648,10 @@
       "name": "Merge - Cas",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [1450, 400]
+      "position": [
+        1450,
+        400
+      ]
     },
     {
       "parameters": {
@@ -1160,7 +664,10 @@
       "name": "Merge - Pluska",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [1450, 700]
+      "position": [
+        1450,
+        700
+      ]
     },
     {
       "parameters": {
@@ -1173,7 +680,10 @@
       "name": "Merge - Refresher",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [1450, 1000]
+      "position": [
+        1450,
+        1000
+      ]
     },
     {
       "parameters": {
@@ -1186,7 +696,10 @@
       "name": "Merge - Startitup",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [1450, 1300]
+      "position": [
+        1450,
+        1300
+      ]
     },
     {
       "parameters": {
@@ -1199,7 +712,10 @@
       "name": "Merge All Results",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [1650, 700]
+      "position": [
+        1650,
+        700
+      ]
     },
     {
       "parameters": {
@@ -1218,7 +734,10 @@
       "name": "Execute Link Extractor",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
-      "position": [1850, 700]
+      "position": [
+        1850,
+        700
+      ]
     }
   ],
   "connections": {
@@ -1312,7 +831,7 @@
       "main": [
         [
           {
-            "node": "Check Exists - Topky",
+            "node": "Upsert - Topky",
             "type": "main",
             "index": 0
           }
@@ -1323,7 +842,7 @@
       "main": [
         [
           {
-            "node": "Check Exists - Cas",
+            "node": "Upsert - Cas",
             "type": "main",
             "index": 0
           }
@@ -1334,7 +853,7 @@
       "main": [
         [
           {
-            "node": "Check Exists - Pluska",
+            "node": "Upsert - Pluska",
             "type": "main",
             "index": 0
           }
@@ -1345,7 +864,7 @@
       "main": [
         [
           {
-            "node": "Check Exists - Refresher",
+            "node": "Upsert - Refresher",
             "type": "main",
             "index": 0
           }
@@ -1356,163 +875,7 @@
       "main": [
         [
           {
-            "node": "Check Exists - Startitup",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Exists - Topky": {
-      "main": [
-        [
-          {
-            "node": "IF Exists - Topky",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Exists - Cas": {
-      "main": [
-        [
-          {
-            "node": "IF Exists - Cas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Exists - Pluska": {
-      "main": [
-        [
-          {
-            "node": "IF Exists - Pluska",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Exists - Refresher": {
-      "main": [
-        [
-          {
-            "node": "IF Exists - Refresher",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Exists - Startitup": {
-      "main": [
-        [
-          {
-            "node": "IF Exists - Startitup",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Exists - Topky": {
-      "main": [
-        [
-          {
-            "node": "Update - Topky",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Insert - Topky",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Exists - Cas": {
-      "main": [
-        [
-          {
-            "node": "Update - Cas",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Insert - Cas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Exists - Pluska": {
-      "main": [
-        [
-          {
-            "node": "Update - Pluska",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Insert - Pluska",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Exists - Refresher": {
-      "main": [
-        [
-          {
-            "node": "Update - Refresher",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Insert - Refresher",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF Exists - Startitup": {
-      "main": [
-        [
-          {
-            "node": "Update - Startitup",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Insert - Startitup",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update - Topky": {
-      "main": [
-        [
-          {
-            "node": "Merge - Topky",
+            "node": "Upsert - Startitup",
             "type": "main",
             "index": 0
           }
@@ -1530,17 +893,6 @@
         ]
       ]
     },
-    "Update - Cas": {
-      "main": [
-        [
-          {
-            "node": "Merge - Cas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Insert - Cas": {
       "main": [
         [
@@ -1548,17 +900,6 @@
             "node": "Merge - Cas",
             "type": "main",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "Update - Pluska": {
-      "main": [
-        [
-          {
-            "node": "Merge - Pluska",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -1574,17 +915,6 @@
         ]
       ]
     },
-    "Update - Refresher": {
-      "main": [
-        [
-          {
-            "node": "Merge - Refresher",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Insert - Refresher": {
       "main": [
         [
@@ -1592,17 +922,6 @@
             "node": "Merge - Refresher",
             "type": "main",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "Update - Startitup": {
-      "main": [
-        [
-          {
-            "node": "Merge - Startitup",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -1678,6 +997,61 @@
         [
           {
             "node": "Execute Link Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert - Topky": {
+      "main": [
+        [
+          {
+            "node": "Merge - Topky",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert - Cas": {
+      "main": [
+        [
+          {
+            "node": "Merge - Cas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert - Pluska": {
+      "main": [
+        [
+          {
+            "node": "Merge - Pluska",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert - Refresher": {
+      "main": [
+        [
+          {
+            "node": "Merge - Refresher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert - Startitup": {
+      "main": [
+        [
+          {
+            "node": "Merge - Startitup",
             "type": "main",
             "index": 0
           }

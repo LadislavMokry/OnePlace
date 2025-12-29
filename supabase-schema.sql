@@ -47,6 +47,68 @@ COMMENT ON COLUMN articles.processed IS 'TRUE after extraction (summary generate
 COMMENT ON COLUMN articles.scored IS 'TRUE after first judge scoring';
 
 -- ============================================================
+-- TABLE 1A: category_pages
+-- Stores category/listing pages for link extraction
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS category_pages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_url TEXT NOT NULL UNIQUE,
+  source_website TEXT NOT NULL,
+  raw_html TEXT,
+  processed BOOLEAN DEFAULT FALSE,
+  scraped_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_category_pages_processed
+  ON category_pages(processed) WHERE processed = FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_category_pages_scraped_at
+  ON category_pages(scraped_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_category_pages_source_website
+  ON category_pages(source_website);
+
+-- Comments for documentation
+COMMENT ON TABLE category_pages IS 'Stores category/listing pages for link extraction';
+COMMENT ON COLUMN category_pages.source_url IS 'Category/listing URL (UNIQUE constraint prevents duplicates)';
+COMMENT ON COLUMN category_pages.raw_html IS 'Raw HTML content for link extraction';
+COMMENT ON COLUMN category_pages.processed IS 'TRUE after links are extracted';
+
+-- ============================================================
+-- TABLE 1B: article_urls
+-- Stores discovered article URLs for full scraping
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS article_urls (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  article_url TEXT NOT NULL UNIQUE,
+  source_website TEXT NOT NULL,
+  category_page_id UUID REFERENCES category_pages(id) ON DELETE CASCADE,
+  scraped BOOLEAN DEFAULT FALSE,
+  discovered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_article_urls_scraped
+  ON article_urls(scraped) WHERE scraped = FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_article_urls_website
+  ON article_urls(source_website);
+
+CREATE INDEX IF NOT EXISTS idx_article_urls_discovered_at
+  ON article_urls(discovered_at DESC);
+
+-- Comments for documentation
+COMMENT ON TABLE article_urls IS 'Stores discovered article URLs pending full scraping';
+COMMENT ON COLUMN article_urls.article_url IS 'Unique URL for a full article page';
+COMMENT ON COLUMN article_urls.category_page_id IS 'FK to category_pages.id';
+COMMENT ON COLUMN article_urls.scraped IS 'TRUE after full article HTML is collected';
+
+-- ============================================================
 -- TABLE 2: posts
 -- Stores generated content from AI models
 -- ============================================================
@@ -376,6 +438,8 @@ DROP FUNCTION IF EXISTS update_model_performance(TEXT, TEXT, BOOLEAN);
 DROP TABLE IF EXISTS performance_metrics CASCADE;
 DROP TABLE IF EXISTS model_performance CASCADE;
 DROP TABLE IF EXISTS posts CASCADE;
+DROP TABLE IF EXISTS article_urls CASCADE;
+DROP TABLE IF EXISTS category_pages CASCADE;
 DROP TABLE IF EXISTS articles CASCADE;
 */
 
