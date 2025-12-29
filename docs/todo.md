@@ -74,7 +74,7 @@
 - [✓] Create n8n credentials for OpenAI
 
 ### Test Workflow - Connection Validation ✅
-- [✓] Create test-supabase-connection.json workflow
+- [✓] Create workflows/test-supabase-connection.json workflow
 - [✓] Fix critical expression syntax error (`{{ }}` → `` =`${}` ``)
 - [✓] Add error handling (`continueOnFail: true` to all nodes)
 - [✓] Deploy workflow to n8n instance (ID: FkBvvxdjYrMMqAKh)
@@ -85,11 +85,11 @@
 - [✓] Confirm n8n API deployment working
 
 ### Documentation Created ✅
-- [✓] implementation-plan.md (40KB - complete 12-week roadmap)
-- [✓] todo.md (this file - 300+ granular tasks)
-- [✓] supabase-schema.sql (12KB - database schema + helpers)
-- [✓] SETUP-GUIDE.md (15KB - Supabase connection guide)
-- [✓] test-supabase-connection.json (test workflow)
+- [✓] docs/implementation-plan.md (40KB - complete 12-week roadmap)
+- [✓] docs/todo.md (this file - 300+ granular tasks)
+- [✓] db/supabase-schema.sql (12KB - database schema + helpers)
+- [✓] docs/SETUP-GUIDE.md (15KB - Supabase connection guide)
+- [✓] workflows/test-supabase-connection.json (test workflow)
 
 ---
 

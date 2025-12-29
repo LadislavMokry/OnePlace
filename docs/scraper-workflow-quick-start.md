@@ -32,7 +32,7 @@ Schedule Trigger (hourly)
 Before starting, verify:
 
 - [ ] **Supabase** database set up
-  - [ ] `articles` table exists (run `supabase-schema.sql` if not)
+  - [ ] `articles` table exists (run `db/supabase-schema.sql` if not)
   - [ ] Supabase URL and API key in `.env.local`
 
 - [ ] **n8n** instance ready
@@ -610,7 +610,7 @@ ORDER BY hour DESC, source_website;
 **Cause**: `articles` table not created in Supabase
 **Fix**:
 1. Go to Supabase SQL Editor
-2. Run `supabase-schema.sql` script (creates all 4 tables)
+2. Run `db/supabase-schema.sql` script (creates all 4 tables)
 3. Verify table exists: `SELECT * FROM articles LIMIT 1;`
 
 ---
@@ -675,10 +675,10 @@ Once this workflow is stable:
 
 ## 📚 Reference Files
 
-- **Full Spec**: `slovak-gossip-automation-spec (1).md` (Component 1)
-- **Implementation Plan**: `implementation-plan.md` (Phase 1, Sub-Workflow 1A)
-- **Task List**: `todo.md` (89 granular tasks for this workflow)
-- **Database Schema**: `supabase-schema.sql` (articles table definition)
+- **Full Spec**: `docs/slovak-gossip-automation-spec (1).md` (Component 1)
+- **Implementation Plan**: `docs/implementation-plan.md` (Phase 1, Sub-Workflow 1A)
+- **Task List**: `docs/todo.md` (89 granular tasks for this workflow)
+- **Database Schema**: `db/supabase-schema.sql` (articles table definition)
 
 ---
 

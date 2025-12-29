@@ -206,7 +206,7 @@ OPENAI_API_KEY=sk-...
 4. **Supabase Insert** - Store raw HTML
 5. **Error Handler** - Continue on individual source failure (onError: continueRegularOutput)
 
-**File Location**: `scraper-hourly-collection.json`
+**File Location**: `workflows/scraper-hourly-collection.json`
 
 **API Keys Required**: `SUPABASE_URL`, `SUPABASE_KEY` ✅
 

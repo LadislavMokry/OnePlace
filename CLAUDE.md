@@ -672,7 +672,7 @@ Part of the n8n-mcp project: https://github.com/czlonkowski/n8n-skills
 
 ## Important File Locations
 
-- Main spec: `slovak-gossip-automation-spec (1).md` (75KB detailed technical specification)
+- Main spec: `docs/slovak-gossip-automation-spec (1).md` (75KB detailed technical specification)
 - Environment variables: `.env.local` (contains N8N_APIKEY)
 - n8n workflows: Store as JSON in version control (export from n8n UI)
 - n8n-skills reference: `n8n-skills/` directory (cloned for reference, skills installed in `~/.claude/skills/`)

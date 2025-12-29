@@ -14,7 +14,7 @@ skills = true
 shell_snapshot = true
 rmcp_client = true
 
-[projects."C:/Users/kladismo/Desktop/Work/Coding"]
+[projects."C:/Users/ladis/Desktop/Coding"]
 trust_level = "trusted"
 
 [mcp_servers.supabase]

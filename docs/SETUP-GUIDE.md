@@ -132,7 +132,7 @@ I've created a test workflow that will:
 
 1. Open n8n at http://localhost:5678
 2. Click **Workflows** → **Import from File**
-3. Select `test-supabase-connection.json`
+3. Select `workflows/test-supabase-connection.json`
 4. Open the imported workflow
 
 **Configure credentials:**
@@ -204,7 +204,7 @@ Go back to Supabase dashboard:
 
 **If tables are missing:**
 - Go to **SQL Editor**
-- Run the entire `supabase-schema.sql` script
+- Run the entire `db/supabase-schema.sql` script
 - Refresh the Tables view
 
 ---
@@ -265,7 +265,7 @@ Click **Save**.
 
 **Solution:**
 - Go to Supabase → SQL Editor
-- Run the entire `supabase-schema.sql` script
+- Run the entire `db/supabase-schema.sql` script
 - Wait 5 seconds for schema to propagate
 - Try again
 
