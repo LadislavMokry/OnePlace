@@ -3,12 +3,15 @@ from __future__ import annotations
 import calendar
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from html import unescape
 from typing import Any
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import feedparser
 import requests
 import trafilatura
 
+from .ai.image_caption import caption_image
 from .config import get_settings
 from .db import get_supabase
 
@@ -24,10 +27,92 @@ def _to_iso(value: Any) -> str | None:
         return None
     if isinstance(value, datetime):
         return value.astimezone(timezone.utc).isoformat()
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(value, tz=timezone.utc).isoformat()
+        except Exception:
+            return None
     try:
         return datetime.fromtimestamp(calendar.timegm(value), tz=timezone.utc).isoformat()
     except Exception:
         return None
+
+
+def _truncate(value: str, max_chars: int = MAX_CONTENT_CHARS) -> str:
+    if not value:
+        return ""
+    if len(value) <= max_chars:
+        return value
+    return value[:max_chars].rsplit(" ", 1)[0]
+
+
+def _looks_like_media(url: str) -> bool:
+    if not url:
+        return False
+    path = urlparse(url).path.lower()
+    return path.endswith((".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".mov", ".webm"))
+
+
+def _normalize_reddit_listing_url(url: str, max_items: int) -> str:
+    if not url:
+        return url
+    parsed = urlparse(url)
+    if "reddit.com" not in parsed.netloc:
+        return url
+    if parsed.path.endswith(".json") or parsed.path.endswith(".json/"):
+        query = parse_qs(parsed.query)
+        query.setdefault("limit", [str(max_items)])
+        query.setdefault("raw_json", ["1"])
+        query_str = urlencode({k: v[0] for k, v in query.items()})
+        return urlunparse(parsed._replace(query=query_str))
+
+    path_parts = [p for p in parsed.path.split("/") if p]
+    subreddit = None
+    if "r" in path_parts:
+        idx = path_parts.index("r")
+        if idx + 1 < len(path_parts):
+            subreddit = path_parts[idx + 1]
+    if not subreddit and path_parts:
+        if path_parts[0].startswith("r"):
+            subreddit = path_parts[0].replace("r", "", 1)
+    if not subreddit:
+        return url
+    sort = next((p for p in path_parts if p in {"top", "new", "hot", "rising"}), "top")
+    query = parse_qs(parsed.query)
+    timeframe = query.get("t", [None])[0] or "day"
+    listing = f"https://www.reddit.com/r/{subreddit}/{sort}/.json"
+    params = {"limit": str(max_items), "t": timeframe, "raw_json": "1"}
+    return f"{listing}?{urlencode(params)}"
+
+
+def _extract_reddit_image_url(post: dict) -> str | None:
+    if post.get("post_hint") == "image" and post.get("url"):
+        return post.get("url")
+    preview = post.get("preview") or {}
+    images = preview.get("images") or []
+    if images:
+        source = images[0].get("source") or {}
+        url = source.get("url")
+        if url:
+            return unescape(url)
+    return None
+
+
+def _fetch_article_text(url: str, settings: Any) -> str:
+    if not url or _looks_like_media(url):
+        return ""
+    if "reddit.com" in urlparse(url).netloc:
+        return ""
+    try:
+        resp = requests.get(
+            url,
+            headers={"User-Agent": settings.user_agent, "Accept": "text/html"},
+            timeout=settings.request_timeout,
+        )
+        resp.raise_for_status()
+        return trafilatura.extract(resp.text) or ""
+    except Exception:
+        return ""
 
 
 def list_projects() -> list[dict]:
@@ -189,7 +274,9 @@ def scrape_source(source: dict, max_items: int = 10) -> ScrapeResult:
     status = "ok"
     count = 0
     try:
-        if source_type in {"rss", "reddit", "youtube"}:
+        if source_type == "reddit":
+            count = _scrape_reddit_source(sb, source_id, url, max_items=max_items)
+        elif source_type in {"rss", "youtube"}:
             count = _scrape_rss_source(sb, source_id, url, max_items=max_items)
         elif source_type in {"page", "website"}:
             count = _scrape_page_source(sb, source_id, url)
@@ -234,6 +321,69 @@ def _scrape_rss_source(sb: Any, source_id: str, url: str, max_items: int) -> int
                 "content": (content or "")[:MAX_CONTENT_CHARS],
                 "raw": (summary or "")[:MAX_CONTENT_CHARS],
                 "published_at": published,
+                "scraped_at": _now_iso(),
+            }
+        )
+    if not rows:
+        return 0
+    return _upsert_items(sb, rows)
+
+
+def _scrape_reddit_source(sb: Any, source_id: str, url: str, max_items: int) -> int:
+    settings = get_settings()
+    listing_url = _normalize_reddit_listing_url(url, max_items=max_items)
+    headers = {
+        "User-Agent": settings.user_agent,
+        "Accept": "application/json",
+    }
+    resp = requests.get(listing_url, headers=headers, timeout=settings.request_timeout)
+    resp.raise_for_status()
+    payload = resp.json()
+    children = payload.get("data", {}).get("children", []) or []
+    rows: list[dict] = []
+    for child in children[:max_items]:
+        post = child.get("data") or {}
+        title = post.get("title") or ""
+        link = post.get("url") or ""
+        permalink = post.get("permalink") or ""
+        reddit_url = f"https://www.reddit.com{permalink}" if permalink else link
+        selftext = post.get("selftext") or ""
+        image_url = _extract_reddit_image_url(post)
+        article_text = ""
+        if link and not post.get("is_self") and not image_url:
+            article_text = _fetch_article_text(link, settings)
+        caption = caption_image(image_url) if image_url else ""
+
+        content_parts: list[str] = []
+        if selftext:
+            content_parts.append(selftext)
+        if article_text:
+            content_parts.append(article_text)
+        if caption:
+            content_parts.append(f"Image description: {caption}")
+        elif image_url:
+            content_parts.append(f"Image URL: {image_url}")
+        if not content_parts:
+            content_parts.append(title)
+        content = _truncate("\n\n".join([part for part in content_parts if part]).strip())
+        raw = _truncate(
+            " | ".join(
+                [
+                    f"score={post.get('score')}",
+                    f"comments={post.get('num_comments')}",
+                    f"subreddit={post.get('subreddit')}",
+                    f"author={post.get('author')}",
+                ]
+            )
+        )
+        rows.append(
+            {
+                "source_id": source_id,
+                "title": title,
+                "url": reddit_url or link,
+                "content": content,
+                "raw": raw,
+                "published_at": _to_iso(post.get("created_utc")),
                 "scraped_at": _now_iso(),
             }
         )

@@ -39,6 +39,8 @@ class Settings(BaseModel):
     asr_model: str = "whisper-1"
     image_model: str = "gpt-image-1"
     enable_image_generation: bool = False
+    image_caption_model: str = "gpt-4o-mini"
+    enable_image_caption: bool = False
     enable_tts: bool = False
     enable_asr: bool = False
     user_agent: str = (
@@ -89,6 +91,9 @@ def get_settings() -> Settings:
         asr_model=os.environ.get("ASR_MODEL", "whisper-1"),
         image_model=os.environ.get("IMAGE_MODEL", "gpt-image-1"),
         enable_image_generation=os.environ.get("ENABLE_IMAGE_GENERATION", "false").lower()
+        in ("1", "true", "yes"),
+        image_caption_model=os.environ.get("IMAGE_CAPTION_MODEL", "gpt-4o-mini"),
+        enable_image_caption=os.environ.get("ENABLE_IMAGE_CAPTION", "false").lower()
         in ("1", "true", "yes"),
         enable_tts=os.environ.get("ENABLE_TTS", "false").lower() in ("1", "true", "yes"),
         enable_asr=os.environ.get("ENABLE_ASR", "false").lower() in ("1", "true", "yes"),

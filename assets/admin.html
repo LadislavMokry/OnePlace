@@ -261,6 +261,33 @@
         currentSource: null,
         currentRoundup: null
       };
+      const dom = {
+        projects: document.getElementById("projects"),
+        projectName: document.getElementById("projectName"),
+        projectLanguage: document.getElementById("projectLanguage"),
+        projectGenInterval: document.getElementById("projectGenInterval"),
+        projectLabel: document.getElementById("projectLabel"),
+        sources: document.getElementById("sources"),
+        sourceName: document.getElementById("sourceName"),
+        sourceType: document.getElementById("sourceType"),
+        sourceUrl: document.getElementById("sourceUrl"),
+        sourceInterval: document.getElementById("sourceInterval"),
+        items: document.getElementById("items"),
+        ytChannel: document.getElementById("ytChannel"),
+        ytToken: document.getElementById("ytToken"),
+        ytStatus: document.getElementById("ytStatus"),
+        roundupStatus: document.getElementById("roundupStatus"),
+        roundupAudio: document.getElementById("roundupAudio"),
+        createProject: document.getElementById("createProject"),
+        addSource: document.getElementById("addSource"),
+        scrapeAll: document.getElementById("scrapeAll"),
+        saveYoutube: document.getElementById("saveYoutube"),
+        saveProject: document.getElementById("saveProject"),
+        deleteProject: document.getElementById("deleteProject"),
+        generateRoundup: document.getElementById("generateRoundup"),
+        renderRoundup: document.getElementById("renderRoundup"),
+        refresh: document.getElementById("refresh")
+      };
 
       async function api(path, options = {}) {
         const res = await fetch(path, {
@@ -276,9 +303,35 @@
           : res.text();
       }
 
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, (char) => {
+          const map = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+          };
+          return map[char] || char;
+        });
+      }
+
+      function formatDate(value) {
+        return value ? value.split("T")[0] : "-";
+      }
+
+      function parsePositiveNumber(raw, label) {
+        if (raw === "") return null;
+        const parsed = Number(raw);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          alert(`${label} must be a number > 0.`);
+          return undefined;
+        }
+        return parsed;
+      }
+
       function renderProjects() {
-        const container = document.getElementById("projects");
-        container.innerHTML = "";
+        dom.projects.innerHTML = "";
         state.projects.forEach((p) => {
           const btn = document.createElement("button");
           btn.textContent = p.name;
@@ -286,67 +339,62 @@
             btn.classList.add("active");
           }
           btn.onclick = () => selectProject(p);
-          container.appendChild(btn);
+          dom.projects.appendChild(btn);
         });
       }
 
       function renderSources() {
-        const tbody = document.getElementById("sources");
-        tbody.innerHTML = "";
+        dom.sources.innerHTML = "";
         state.sources.forEach((s) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${s.name}</td>
-            <td>${s.source_type}</td>
-            <td class="small">${s.url}</td>
-            <td class="small">${s.last_scraped_at ? s.last_scraped_at.split("T")[0] : "-"}</td>
+            <td>${escapeHtml(s.name)}</td>
+            <td>${escapeHtml(s.source_type)}</td>
+            <td class="small">${escapeHtml(s.url)}</td>
+            <td class="small">${formatDate(s.last_scraped_at)}</td>
             <td class="small">${s.scrape_interval_hours ?? "-"}</td>
-            <td><span class="status-pill">${s.last_status || "idle"}</span></td>
+            <td><span class="status-pill">${escapeHtml(s.last_status || "idle")}</span></td>
             <td>
-              <button class="secondary" data-id="${s.id}">Scrape</button>
-              <button class="secondary" data-view="${s.id}">View</button>
-              <button class="secondary" data-edit="${s.id}">Edit</button>
+              <button class="secondary" data-action="scrape" data-id="${s.id}">Scrape</button>
+              <button class="secondary" data-action="view" data-id="${s.id}">View</button>
+              <button class="secondary" data-action="edit" data-id="${s.id}">Edit</button>
             </td>
           `;
-          tbody.appendChild(tr);
-        });
-        tbody.querySelectorAll("button[data-id]").forEach((btn) => {
-          btn.onclick = () => scrapeSource(btn.dataset.id);
-        });
-        tbody.querySelectorAll("button[data-view]").forEach((btn) => {
-          btn.onclick = () => loadItems(btn.dataset.view);
-        });
-        tbody.querySelectorAll("button[data-edit]").forEach((btn) => {
-          btn.onclick = () => editSource(btn.dataset.edit);
+          dom.sources.appendChild(tr);
         });
       }
 
       async function loadProjects() {
         state.projects = await api("/api/projects");
+        if (state.currentProject) {
+          const match = state.projects.find((p) => p.id === state.currentProject.id);
+          state.currentProject = match || null;
+        }
         if (!state.currentProject && state.projects.length) {
           await selectProject(state.projects[0]);
           return;
         }
         renderProjects();
         if (state.currentProject) {
-          document.getElementById("projectLabel").textContent = state.currentProject.name;
-          await loadSources();
-          await loadYoutube();
+          dom.projectLabel.textContent = state.currentProject.name;
+          await Promise.all([loadSources(), loadYoutube()]);
+        } else {
+          dom.projectLabel.textContent = "No project selected";
+          dom.sources.innerHTML = "";
+          dom.items.innerHTML = "<div class='muted small'>Select a source to see recent items.</div>";
         }
       }
 
       async function selectProject(project) {
         state.currentProject = project;
-        document.getElementById("projectLabel").textContent = project.name;
+        dom.projectLabel.textContent = project.name;
         const langValue = ["en", "es", "sk"].includes(project.language)
           ? project.language
           : "en";
-        document.getElementById("projectLanguage").value = langValue;
-        document.getElementById("projectGenInterval").value =
-          project.generation_interval_hours || "";
+        dom.projectLanguage.value = langValue;
+        dom.projectGenInterval.value = project.generation_interval_hours || "";
         renderProjects();
-        await loadSources();
-        await loadYoutube();
+        await Promise.all([loadSources(), loadYoutube()]);
       }
 
       async function loadSources() {
@@ -356,25 +404,21 @@
       }
 
       async function addProject() {
-        const name = document.getElementById("projectName").value.trim();
+        const name = dom.projectName.value.trim();
         if (!name) return;
         await api("/api/projects", { method: "POST", body: JSON.stringify({ name }) });
-        document.getElementById("projectName").value = "";
+        dom.projectName.value = "";
         await loadProjects();
       }
 
       async function addSource() {
         if (!state.currentProject) return;
-        const name = document.getElementById("sourceName").value.trim();
-        const source_type = document.getElementById("sourceType").value;
-        const url = document.getElementById("sourceUrl").value.trim();
-        const intervalRaw = document.getElementById("sourceInterval").value.trim();
-        const scrape_interval_hours =
-          intervalRaw === "" ? null : Number(intervalRaw);
-        if (intervalRaw !== "" && (!Number.isFinite(scrape_interval_hours) || scrape_interval_hours <= 0)) {
-          alert("Scrape interval must be a number > 0.");
-          return;
-        }
+        const name = dom.sourceName.value.trim();
+        const source_type = dom.sourceType.value;
+        const url = dom.sourceUrl.value.trim();
+        const intervalRaw = dom.sourceInterval.value.trim();
+        const scrape_interval_hours = parsePositiveNumber(intervalRaw, "Scrape interval");
+        if (scrape_interval_hours === undefined) return;
         if (!name || !url) return;
         await api(`/api/projects/${state.currentProject.id}/sources`, {
           method: "POST",
@@ -386,9 +430,9 @@
             scrape_interval_hours
           })
         });
-        document.getElementById("sourceName").value = "";
-        document.getElementById("sourceUrl").value = "";
-        document.getElementById("sourceInterval").value = "";
+        dom.sourceName.value = "";
+        dom.sourceUrl.value = "";
+        dom.sourceInterval.value = "";
         await loadSources();
       }
 
@@ -410,11 +454,8 @@
           current?.scrape_interval_hours || ""
         );
         if (value === null) return;
-        const parsed = Number(value);
-        if (!Number.isFinite(parsed) || parsed <= 0) {
-          alert("Please enter a number > 0.");
-          return;
-        }
+        const parsed = parsePositiveNumber(value, "Scrape interval");
+        if (parsed === undefined) return;
         await api(`/api/sources/${sourceId}`, {
           method: "PATCH",
           body: JSON.stringify({ scrape_interval_hours: parsed })
@@ -425,28 +466,30 @@
       async function loadItems(sourceId) {
         state.currentSource = sourceId;
         const items = await api(`/api/sources/${sourceId}/items?limit=10`);
-        const container = document.getElementById("items");
         if (!items.length) {
-          container.innerHTML = "<div class='muted small'>No items yet.</div>";
+          dom.items.innerHTML = "<div class='muted small'>No items yet.</div>";
           return;
         }
-        container.innerHTML = items
-          .map(
-            (item) => `
+        dom.items.innerHTML = items
+          .map((item) => {
+            const title = escapeHtml(item.title || "Untitled");
+            const url = escapeHtml(item.url || "");
+            const content = escapeHtml((item.content || "").slice(0, 220));
+            return `
               <div class="item">
-                <div><strong>${item.title || "Untitled"}</strong></div>
-                <div class="small muted">${item.url}</div>
-                <div class="small">${(item.content || "").slice(0, 220)}</div>
+                <div><strong>${title}</strong></div>
+                <div class="small muted">${url}</div>
+                <div class="small">${content}</div>
               </div>
-            `
-          )
+            `;
+          })
           .join("");
       }
 
       async function loadYoutube() {
         if (!state.currentProject) return;
         const info = await api(`/api/projects/${state.currentProject.id}/youtube`);
-        const status = document.getElementById("ytStatus");
+        const status = dom.ytStatus;
         if (info && info.refresh_token) {
           status.textContent = `Saved token for: ${info.channel_title || "Unknown channel"}`;
           status.classList.remove("warn");
@@ -458,20 +501,20 @@
 
       async function saveYoutube() {
         if (!state.currentProject) return;
-        const refresh_token = document.getElementById("ytToken").value.trim();
-        const channel_title = document.getElementById("ytChannel").value.trim();
+        const refresh_token = dom.ytToken.value.trim();
+        const channel_title = dom.ytChannel.value.trim();
         if (!refresh_token) return;
         await api(`/api/projects/${state.currentProject.id}/youtube`, {
           method: "POST",
           body: JSON.stringify({ refresh_token, channel_title })
         });
-        document.getElementById("ytToken").value = "";
+        dom.ytToken.value = "";
         await loadYoutube();
       }
 
       async function generateRoundup() {
         if (!state.currentProject) return;
-        const status = document.getElementById("roundupStatus");
+        const status = dom.roundupStatus;
         status.textContent = "Generating script...";
         try {
           const result = await api(`/api/projects/${state.currentProject.id}/audio-roundup`, {
@@ -480,6 +523,7 @@
           if (result.status !== "ok") {
             status.textContent = "No items available for roundup.";
             state.currentRoundup = null;
+            dom.roundupAudio.removeAttribute("src");
             return;
           }
           state.currentRoundup = result.post;
@@ -495,15 +539,14 @@
           alert("Generate a script first.");
           return;
         }
-        const status = document.getElementById("roundupStatus");
+        const status = dom.roundupStatus;
         status.textContent = "Rendering audio...";
         try {
           const result = await api(`/api/audio-roundup/${state.currentRoundup.id}/render`, {
             method: "POST"
           });
-          const audio = document.getElementById("roundupAudio");
-          audio.src = `${result.url}?t=${Date.now()}`;
-          audio.play().catch(() => {});
+          dom.roundupAudio.src = `${result.url}?t=${Date.now()}`;
+          dom.roundupAudio.play().catch(() => {});
           status.textContent = "Audio ready.";
         } catch (err) {
           console.error(err);
@@ -513,13 +556,10 @@
 
       async function saveProjectSettings() {
         if (!state.currentProject) return;
-        const language = document.getElementById("projectLanguage").value;
-        const genRaw = document.getElementById("projectGenInterval").value.trim();
-        const genInterval = genRaw === "" ? null : Number(genRaw);
-        if (genRaw !== "" && (!Number.isFinite(genInterval) || genInterval <= 0)) {
-          alert("Generation interval must be a number > 0.");
-          return;
-        }
+        const language = dom.projectLanguage.value;
+        const genRaw = dom.projectGenInterval.value.trim();
+        const genInterval = parsePositiveNumber(genRaw, "Generation interval");
+        if (genInterval === undefined) return;
         await api(`/api/projects/${state.currentProject.id}`, {
           method: "PATCH",
           body: JSON.stringify({
@@ -537,21 +577,36 @@
         if (!ok) return;
         await api(`/api/projects/${state.currentProject.id}`, { method: "DELETE" });
         state.currentProject = null;
-        document.getElementById("projectLabel").textContent = "No project selected";
-        document.getElementById("projectLanguage").value = "";
-        document.getElementById("projectGenInterval").value = "";
+        dom.projectLabel.textContent = "No project selected";
+        dom.projectLanguage.value = "";
+        dom.projectGenInterval.value = "";
+        dom.items.innerHTML = "<div class='muted small'>Select a source to see recent items.</div>";
         await loadProjects();
       }
 
-      document.getElementById("createProject").onclick = addProject;
-      document.getElementById("addSource").onclick = addSource;
-      document.getElementById("scrapeAll").onclick = scrapeAll;
-      document.getElementById("saveYoutube").onclick = saveYoutube;
-      document.getElementById("saveProject").onclick = saveProjectSettings;
-      document.getElementById("deleteProject").onclick = deleteProject;
-      document.getElementById("generateRoundup").onclick = generateRoundup;
-      document.getElementById("renderRoundup").onclick = renderRoundup;
-      document.getElementById("refresh").onclick = loadProjects;
+      dom.sources.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+        const { action, id } = button.dataset;
+        if (!id) return;
+        if (action === "scrape") {
+          scrapeSource(id);
+        } else if (action === "view") {
+          loadItems(id);
+        } else if (action === "edit") {
+          editSource(id);
+        }
+      });
+
+      dom.createProject.onclick = addProject;
+      dom.addSource.onclick = addSource;
+      dom.scrapeAll.onclick = scrapeAll;
+      dom.saveYoutube.onclick = saveYoutube;
+      dom.saveProject.onclick = saveProjectSettings;
+      dom.deleteProject.onclick = deleteProject;
+      dom.generateRoundup.onclick = generateRoundup;
+      dom.renderRoundup.onclick = renderRoundup;
+      dom.refresh.onclick = loadProjects;
 
       loadProjects().catch((err) => {
         console.error(err);

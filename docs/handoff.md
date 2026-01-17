@@ -1,6 +1,19 @@
 # Handoff Notes
 Last updated: 2026-01-17
 
+## Summary of this session (2026-01-17, later)
+- Admin UI JS refactor: cached DOM refs, event delegation for source actions, shared helpers, and safer HTML rendering.
+- Reddit scraping upgraded: top posts via JSON listing, article extraction for link posts, optional image captioning for image posts.
+- New image caption helper + OpenAI client support for image input.
+- New config flags: `ENABLE_IMAGE_CAPTION` and `IMAGE_CAPTION_MODEL`.
+
+## Next steps (tomorrow)
+1. Manually add F1 sources (RSS + Reddit) in the admin view.
+2. Test scraping and verify items show up for each source.
+
+## Notes / requirements
+- Image captioning requires `ENABLE_IMAGE_CAPTION=true` and a valid `OPENAI_API_KEY`.
+
 ## Summary of this session (2026-01-17)
 - Admin UI renamed to **OnePlace Admin**.
 - Project settings added: language (dropdown: en/es/sk) + generation interval hours.

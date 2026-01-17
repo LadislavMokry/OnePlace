@@ -116,6 +116,44 @@ class OpenAIClient:
             raise RuntimeError(f"OpenAI returned empty content: {data}")
         return content
 
+    def chat_text_with_image(
+        self,
+        model: str,
+        system: str,
+        user_text: str,
+        image_url: str,
+        temperature: float = 0.4,
+        max_tokens: int = 300,
+        reasoning_effort: str | None = None,
+    ) -> str:
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_text},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                },
+            ],
+            self._max_tokens_param(model): max_tokens,
+        }
+        if self._supports_temperature(model):
+            payload["temperature"] = temperature
+        effort = reasoning_effort or self._default_reasoning_effort(model)
+        if effort and self._supports_reasoning_effort(model):
+            payload["reasoning_effort"] = effort
+        resp = self._post("/chat/completions", payload)
+        if not resp.ok:
+            raise RuntimeError(f"OpenAI error {resp.status_code}: {resp.text}")
+        data = resp.json()
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        if not str(content).strip():
+            raise RuntimeError(f"OpenAI returned empty content: {data}")
+        return content
+
     def tts(self, model: str, voice: str, text: str) -> bytes:
         payload = {"model": model, "voice": voice, "input": text}
         resp = self._post("/audio/speech", payload)
