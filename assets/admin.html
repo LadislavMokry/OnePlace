@@ -101,6 +101,14 @@
         padding: 6px 10px;
         cursor: pointer;
       }
+      a.secondary {
+        display: inline-block;
+        background: #f2e7da;
+        color: #3a2f26;
+        border-radius: 8px;
+        padding: 6px 10px;
+        text-decoration: none;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -209,7 +217,10 @@
   <body>
     <header>
       <h1>OnePlace Admin</h1>
-      <button class="secondary" id="refresh">Refresh</button>
+      <div class="row">
+        <a class="secondary" href="/stats">Stats</a>
+        <button class="secondary" id="refresh">Refresh</button>
+      </div>
     </header>
     <main>
       <section class="panel">

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OnePlace Stats</title>
+    <style>
+      :root {
+        --bg: #f7f2ea;
+        --panel: #fff8ef;
+        --text: #2b2118;
+        --muted: #8b7b6a;
+        --border: #e1d5c7;
+        --accent: #b5532a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Georgia", "Times New Roman", serif;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border);
+        background: #fff;
+      }
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0.3px;
+      }
+      main {
+        padding: 20px 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      select, button {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 10px;
+        background: #fff;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: 0;
+        cursor: pointer;
+      }
+      .secondary {
+        background: #f2e7da;
+        color: #3a2f26;
+      }
+      a.secondary {
+        display: inline-block;
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      .small { font-size: 12px; }
+      .muted { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>OnePlace Stats</h1>
+      <a class="secondary" href="/">Back to Admin</a>
+    </header>
+    <main>
+      <section class="panel">
+        <div class="row">
+          <label class="small">Project</label>
+          <select id="projectSelect"></select>
+          <button id="refresh" class="secondary">Refresh</button>
+        </div>
+        <div class="small muted" id="projectMeta">No project selected.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Source Hit Rate</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Total</th>
+              <th>Used in Audio</th>
+              <th>Hit Rate</th>
+              <th>Avg Score</th>
+              <th>Last Scraped</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+      </section>
+    </main>
+    <script>
+      const dom = {
+        projectSelect: document.getElementById("projectSelect"),
+        statsBody: document.getElementById("statsBody"),
+        projectMeta: document.getElementById("projectMeta"),
+        refresh: document.getElementById("refresh")
+      };
+
+      async function api(path, options = {}) {
+        const res = await fetch(path, {
+          headers: { "Content-Type": "application/json" },
+          ...options
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || res.statusText);
+        }
+        return res.json();
+      }
+
+      function formatDate(value) {
+        return value ? value.split("T")[0] : "-";
+      }
+
+      async function loadProjects() {
+        const projects = await api("/api/projects");
+        dom.projectSelect.innerHTML = "";
+        projects.forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          dom.projectSelect.appendChild(opt);
+        });
+        if (projects.length) {
+          dom.projectSelect.value = projects[0].id;
+          await loadStats();
+        }
+      }
+
+      async function loadStats() {
+        const projectId = dom.projectSelect.value;
+        if (!projectId) return;
+        const data = await api(`/api/projects/${projectId}/stats`);
+        const rows = data.sources || [];
+        dom.projectMeta.textContent = `Sources: ${rows.length}`;
+        dom.statsBody.innerHTML = "";
+        if (!rows.length) {
+          dom.statsBody.innerHTML = "<tr><td colspan='6' class='small muted'>No data yet.</td></tr>";
+          return;
+        }
+        rows.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row.source_name || "-"}</td>
+            <td class="small">${row.total_articles}</td>
+            <td class="small">${row.used_in_audio}</td>
+            <td class="small">${row.hitrate}%</td>
+            <td class="small">${row.avg_score ?? "-"}</td>
+            <td class="small">${formatDate(row.last_scraped_at)}</td>
+          `;
+          dom.statsBody.appendChild(tr);
+        });
+      }
+
+      dom.projectSelect.onchange = loadStats;
+      dom.refresh.onclick = loadStats;
+
+      loadProjects().catch((err) => {
+        console.error(err);
+        dom.projectMeta.textContent = "Failed to load projects.";
+      });
+    </script>
+  </body>
+</html>

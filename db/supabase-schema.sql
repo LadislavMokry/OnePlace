@@ -9,6 +9,7 @@
 CREATE TABLE IF NOT EXISTS articles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
+  source_id UUID REFERENCES sources(id) ON DELETE SET NULL,
   source_url TEXT NOT NULL UNIQUE,
   source_website TEXT NOT NULL,
   title TEXT,
@@ -360,6 +361,9 @@ ALTER TABLE IF EXISTS articles
   ADD COLUMN IF NOT EXISTS content_hash TEXT;
 
 ALTER TABLE IF EXISTS articles
+  ADD COLUMN IF NOT EXISTS source_id UUID REFERENCES sources(id) ON DELETE SET NULL;
+
+ALTER TABLE IF EXISTS articles
   ADD COLUMN IF NOT EXISTS duplicate_of UUID REFERENCES articles(id) ON DELETE SET NULL;
 
 ALTER TABLE IF EXISTS articles
@@ -378,6 +382,12 @@ BEGIN
     WHERE table_name = 'articles' AND column_name = 'project_id'
   ) THEN
     CREATE INDEX IF NOT EXISTS idx_articles_project_id ON articles(project_id);
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'articles' AND column_name = 'source_id'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_articles_source_id ON articles(source_id);
   END IF;
   IF EXISTS (
     SELECT 1 FROM information_schema.columns

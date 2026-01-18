@@ -382,7 +382,7 @@ def list_articles_page(
             .order("scraped_at", desc=True)
         )
     else:
-        query = query.order("judge_score", desc=desc).order("scraped_at", desc=True)
+        query = query.order("judge_score", desc=desc, nullsfirst=False).order("scraped_at", desc=True)
     query = query.range(offset, offset + limit - 1)
     resp = query.execute()
     items = resp.data or []
@@ -403,6 +403,84 @@ def list_articles_page(
     for item in items:
         item["used_in_audio"] = item["id"] in used_ids
     return {"items": items, "total": total}
+
+
+def _chunked(values: list[str], size: int = 200) -> list[list[str]]:
+    return [values[i : i + size] for i in range(0, len(values), size)]
+
+
+def project_stats(project_id: str) -> dict:
+    sb = get_supabase()
+    sources = list_sources(project_id)
+    stats = []
+    for source in sources:
+        source_id = source.get("id")
+        total = (
+            sb.table("articles")
+            .select("id", count="exact")
+            .eq("project_id", project_id)
+            .eq("source_id", source_id)
+            .execute()
+            .count
+            or 0
+        )
+        used = 0
+        avg_score = None
+        if total:
+            score_sum = 0
+            score_count = 0
+            offset = 0
+            page_size = 1000
+            ids = []
+            while True:
+                page = (
+                    sb.table("articles")
+                    .select("id, judge_score")
+                    .eq("project_id", project_id)
+                    .eq("source_id", source_id)
+                    .range(offset, offset + page_size - 1)
+                    .execute()
+                    .data
+                    or []
+                )
+                if not page:
+                    break
+                for row in page:
+                    if row.get("id"):
+                        ids.append(row["id"])
+                    if row.get("judge_score") is not None:
+                        score_sum += row["judge_score"]
+                        score_count += 1
+                offset += page_size
+                if len(page) < page_size:
+                    break
+            if score_count:
+                avg_score = round(score_sum / score_count, 2)
+            if ids:
+                for chunk in _chunked(ids, size=200):
+                    used += (
+                        sb.table("article_usage")
+                        .select("id", count="exact")
+                        .in_("article_id", chunk)
+                        .eq("usage_type", "audio_roundup")
+                        .execute()
+                        .count
+                        or 0
+                    )
+        hitrate = round((used / total) * 100, 1) if total else 0.0
+        stats.append(
+            {
+                "source_id": source_id,
+                "source_name": source.get("name"),
+                "total_articles": total,
+                "used_in_audio": used,
+                "hitrate": hitrate,
+                "avg_score": avg_score,
+                "last_scraped_at": source.get("last_scraped_at"),
+            }
+        )
+    stats.sort(key=lambda x: (x["hitrate"], x["total_articles"]), reverse=True)
+    return {"project_id": project_id, "sources": stats}
 
 
 def get_youtube_account(project_id: str) -> dict | None:
@@ -708,6 +786,7 @@ def ingest_source_items(limit: int = 20, fetch_full: bool = True, project_id: st
             "source_url": url,
             "source_website": _source_website(url),
             "project_id": source.get("project_id"),
+            "source_id": source.get("id"),
             "title": item.get("title"),
             "raw_html": raw_text,
             "content": raw_text,

@@ -19,6 +19,7 @@ from .admin import (
     list_projects,
     list_source_items,
     list_sources,
+    project_stats,
     scrape_project,
     scrape_source,
     check_project_access,
@@ -109,6 +110,15 @@ def admin_ui() -> HTMLResponse:
     html_path = root / "assets" / "admin.html"
     if not html_path.exists():
         return HTMLResponse("<h1>Admin UI missing</h1>", status_code=500)
+    return HTMLResponse(html_path.read_text(encoding="utf-8"))
+
+
+@app.get("/stats", response_class=HTMLResponse)
+def stats_ui() -> HTMLResponse:
+    root = Path(__file__).resolve().parent.parent
+    html_path = root / "assets" / "stats.html"
+    if not html_path.exists():
+        return HTMLResponse("<h1>Stats UI missing</h1>", status_code=500)
     return HTMLResponse(html_path.read_text(encoding="utf-8"))
 
 
@@ -269,6 +279,11 @@ def api_list_articles(
     direction: str = Query("desc"),
 ) -> dict:
     return list_articles_page(project_id, limit=limit, offset=offset, order_by=order_by, direction=direction)
+
+
+@app.get("/api/projects/{project_id}/stats")
+def api_project_stats(project_id: str) -> dict:
+    return project_stats(project_id)
 
 
 @app.post("/api/sources/{source_id}/check-access")
