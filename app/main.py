@@ -11,6 +11,7 @@ from .admin import (
     create_source,
     delete_project,
     delete_source,
+    check_source_access,
     get_source,
     get_youtube_account,
     list_projects,
@@ -18,6 +19,7 @@ from .admin import (
     list_sources,
     scrape_project,
     scrape_source,
+    check_project_access,
     update_project,
     update_source,
     upsert_youtube_account,
@@ -209,6 +211,19 @@ def api_scrape_source(source_id: str, max_items: int = Query(10, ge=1, le=50)) -
 @app.get("/api/sources/{source_id}/items")
 def api_list_source_items(source_id: str, limit: int = Query(10, ge=1, le=50)) -> list[dict]:
     return list_source_items(source_id, limit=limit)
+
+
+@app.post("/api/sources/{source_id}/check-access")
+def api_check_source_access(source_id: str, sample: int = Query(3, ge=1, le=10)) -> dict:
+    source = get_source(source_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="source not found")
+    return check_source_access(source_id, sample=sample)
+
+
+@app.post("/api/projects/{project_id}/check-access")
+def api_check_project_access(project_id: str, sample: int = Query(3, ge=1, le=10)) -> dict:
+    return check_project_access(project_id, sample=sample)
 
 
 @app.get("/api/projects/{project_id}/youtube")

@@ -121,6 +121,23 @@
         font-size: 12px;
         background: #efe7da;
       }
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #efe7da;
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-left: 6px;
+      }
+      .spinner.hidden {
+        display: none;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
       .items {
         max-height: 240px;
         overflow: auto;
@@ -128,6 +145,46 @@
         padding: 8px;
         border-radius: 8px;
         background: #fff;
+      }
+      .items-row td {
+        padding: 0;
+      }
+      .items-panel {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        margin: 8px 0 12px;
+        background: #fff;
+      }
+      .auth-panel {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        margin: 8px 0 12px;
+        background: #fff;
+      }
+      .items-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .item-card {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #fbf7ef;
+      }
+      .item-card .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .item-card .excerpt {
+        margin-top: 8px;
+        white-space: pre-wrap;
       }
       .items .item {
         padding: 6px 0;
@@ -186,6 +243,8 @@
         <h2>Sources</h2>
         <div class="row">
           <button class="primary" id="scrapeAll">Scrape All</button>
+          <button class="secondary" id="checkAll">Check All</button>
+          <span id="checkAllSpinner" class="spinner hidden" aria-label="Checking"></span>
           <span class="small muted" id="projectLabel">No project selected</span>
         </div>
         <table>
@@ -197,6 +256,7 @@
               <th>Last</th>
               <th>Every (hrs)</th>
               <th>Status</th>
+              <th>Auth</th>
               <th></th>
             </tr>
           </thead>
@@ -227,7 +287,7 @@
       <section class="panel">
         <h2>Latest Items</h2>
         <div class="items" id="items">
-          <div class="muted small">Select a source to see recent items.</div>
+          <div class="muted small">Click “View” on a source to expand items inline.</div>
         </div>
       </section>
 
@@ -259,6 +319,7 @@
         sources: [],
         currentProject: null,
         currentSource: null,
+        currentAuthSource: null,
         currentRoundup: null
       };
       const dom = {
@@ -281,6 +342,8 @@
         createProject: document.getElementById("createProject"),
         addSource: document.getElementById("addSource"),
         scrapeAll: document.getElementById("scrapeAll"),
+        checkAll: document.getElementById("checkAll"),
+        checkAllSpinner: document.getElementById("checkAllSpinner"),
         saveYoutube: document.getElementById("saveYoutube"),
         saveProject: document.getElementById("saveProject"),
         deleteProject: document.getElementById("deleteProject"),
@@ -347,6 +410,15 @@
         dom.sources.innerHTML = "";
         state.sources.forEach((s) => {
           const tr = document.createElement("tr");
+          tr.dataset.sourceId = s.id;
+          const authRequired = Boolean(s.config && s.config.auth_required);
+          const authStatus = s.config && s.config.auth_last_check_status;
+          const authReason = s.config && s.config.auth_last_check_reason;
+          const authLabel = authRequired
+            ? `login${authReason ? ` (${escapeHtml(authReason)})` : ""}`
+            : authStatus === "ok"
+              ? "ok"
+              : "-";
           tr.innerHTML = `
             <td>${escapeHtml(s.name)}</td>
             <td>${escapeHtml(s.source_type)}</td>
@@ -354,9 +426,11 @@
             <td class="small">${formatDate(s.last_scraped_at)}</td>
             <td class="small">${s.scrape_interval_hours ?? "-"}</td>
             <td><span class="status-pill">${escapeHtml(s.last_status || "idle")}</span></td>
+            <td class="small">${authLabel}</td>
             <td>
               <button class="secondary" data-action="scrape" data-id="${s.id}">Scrape</button>
               <button class="secondary" data-action="view" data-id="${s.id}">View</button>
+              <button class="secondary" data-action="login" data-id="${s.id}">Login</button>
               <button class="secondary" data-action="edit" data-id="${s.id}">Edit</button>
             </td>
           `;
@@ -381,7 +455,7 @@
         } else {
           dom.projectLabel.textContent = "No project selected";
           dom.sources.innerHTML = "";
-          dom.items.innerHTML = "<div class='muted small'>Select a source to see recent items.</div>";
+          closeInlinePanels();
         }
       }
 
@@ -401,6 +475,7 @@
         if (!state.currentProject) return;
         state.sources = await api(`/api/projects/${state.currentProject.id}/sources`);
         renderSources();
+        closeInlinePanels();
       }
 
       async function addProject() {
@@ -447,6 +522,43 @@
         await loadSources();
       }
 
+      async function checkSourceAccess(sourceId) {
+        const result = await api(`/api/sources/${sourceId}/check-access`, { method: "POST" });
+        if (result.status === "login_required") {
+          alert(`Login likely required (${result.reason || "detected"}). Use Login to add credentials.`);
+        } else if (result.status === "ok") {
+          alert("Access looks OK for sampled articles.");
+        } else {
+          alert("Access check failed.");
+        }
+        await loadSources();
+      }
+
+      async function checkAllSources() {
+        if (!state.currentProject) return;
+        dom.checkAll.disabled = true;
+        dom.checkAllSpinner.classList.remove("hidden");
+        const originalLabel = dom.checkAll.textContent;
+        dom.checkAll.textContent = "Checking...";
+        try {
+          const result = await api(`/api/projects/${state.currentProject.id}/check-access?sample=6`, {
+            method: "POST"
+          });
+          const flagged = result.flagged || 0;
+          const checked = result.checked || 0;
+          if (flagged > 0) {
+            alert(`Login detected for ${flagged} / ${checked} sources. See Auth column.`);
+          } else {
+            alert(`Access looks OK for ${checked} sources.`);
+          }
+        } finally {
+          dom.checkAll.disabled = false;
+          dom.checkAllSpinner.classList.add("hidden");
+          dom.checkAll.textContent = originalLabel;
+          await loadSources();
+        }
+      }
+
       async function editSource(sourceId) {
         const current = state.sources.find((s) => s.id === sourceId);
         const value = prompt(
@@ -463,27 +575,153 @@
         await loadSources();
       }
 
-      async function loadItems(sourceId) {
-        state.currentSource = sourceId;
-        const items = await api(`/api/sources/${sourceId}/items?limit=10`);
-        if (!items.length) {
-          dom.items.innerHTML = "<div class='muted small'>No items yet.</div>";
-          return;
-        }
-        dom.items.innerHTML = items
+      function closeItemsPanel() {
+        const existing = dom.sources.querySelector("tr.items-row");
+        if (existing) existing.remove();
+        state.currentSource = null;
+      }
+
+      function closeAuthPanel() {
+        const existing = dom.sources.querySelector("tr.auth-row");
+        if (existing) existing.remove();
+        state.currentAuthSource = null;
+      }
+
+      function closeInlinePanels() {
+        closeItemsPanel();
+        closeAuthPanel();
+      }
+
+      function buildItemsPanel(items) {
+        const cards = items
           .map((item) => {
             const title = escapeHtml(item.title || "Untitled");
             const url = escapeHtml(item.url || "");
-            const content = escapeHtml((item.content || "").slice(0, 220));
+            const content = escapeHtml(item.content || "");
+            const published = formatDate(item.published_at) || "-";
+            const scraped = formatDate(item.scraped_at) || "-";
             return `
-              <div class="item">
+              <div class="item-card">
                 <div><strong>${title}</strong></div>
-                <div class="small muted">${url}</div>
-                <div class="small">${content}</div>
+                <div class="meta">
+                  <span>${published !== "-" ? `Published: ${published}` : `Scraped: ${scraped}`}</span>
+                  <a href="${url}" target="_blank" rel="noopener noreferrer">Open link</a>
+                </div>
+                <div class="excerpt">${content}</div>
               </div>
             `;
           })
           .join("");
+        return `
+          <div class="items-panel">
+            <div class="items-grid">${cards}</div>
+          </div>
+        `;
+      }
+
+      async function loadItems(sourceId) {
+        const currentRow = dom.sources.querySelector(`tr[data-source-id="${sourceId}"]`);
+        if (!currentRow) return;
+        if (state.currentSource === sourceId) {
+          closeItemsPanel();
+          return;
+        }
+        closeInlinePanels();
+        state.currentSource = sourceId;
+        const items = await api(`/api/sources/${sourceId}/items?limit=10`);
+        const row = document.createElement("tr");
+        row.className = "items-row";
+        if (!items.length) {
+          row.innerHTML = `<td colspan="8"><div class="items-panel muted small">No items yet.</div></td>`;
+        } else {
+          row.innerHTML = `<td colspan="8">${buildItemsPanel(items)}</td>`;
+        }
+        currentRow.parentNode.insertBefore(row, currentRow.nextSibling);
+      }
+
+      function buildAuthPanel(source) {
+        const cfg = source.config || {};
+        const authRequired = Boolean(cfg.auth_required);
+        const authType = cfg.auth_type || "none";
+        const username = cfg.auth_username || "";
+        const password = cfg.auth_password || "";
+        const cookie = cfg.auth_cookie || "";
+        const headerName = cfg.auth_header_name || "";
+        const headerValue = cfg.auth_header_value || "";
+        return `
+          <div class="auth-panel">
+            <div class="row">
+              <label class="small"><input type="checkbox" data-field="auth_required" ${authRequired ? "checked" : ""} /> Requires login</label>
+              <select data-field="auth_type">
+                <option value="none"${authType === "none" ? " selected" : ""}>none</option>
+                <option value="basic"${authType === "basic" ? " selected" : ""}>basic</option>
+                <option value="cookie"${authType === "cookie" ? " selected" : ""}>cookie</option>
+                <option value="header"${authType === "header" ? " selected" : ""}>header</option>
+              </select>
+            </div>
+            <div class="row">
+              <input data-field="auth_username" placeholder="Username" value="${escapeHtml(username)}" />
+              <input data-field="auth_password" type="password" placeholder="Password" value="${escapeHtml(password)}" />
+            </div>
+            <div class="row">
+              <input data-field="auth_cookie" placeholder="Cookie header (optional)" value="${escapeHtml(cookie)}" style="flex: 1 1 320px;" />
+            </div>
+            <div class="row">
+              <input data-field="auth_header_name" placeholder="Header name" value="${escapeHtml(headerName)}" />
+              <input data-field="auth_header_value" placeholder="Header value" value="${escapeHtml(headerValue)}" />
+            </div>
+            <div class="row">
+              <button class="primary" data-action="save-auth" data-id="${source.id}">Save Login</button>
+              <button class="secondary" data-action="cancel-auth" data-id="${source.id}">Cancel</button>
+            </div>
+            <div class="small muted">Credentials are stored in source config (plain text).</div>
+          </div>
+        `;
+      }
+
+      async function openAuthPanel(sourceId) {
+        const currentRow = dom.sources.querySelector(`tr[data-source-id="${sourceId}"]`);
+        if (!currentRow) return;
+        if (state.currentAuthSource === sourceId) {
+          closeAuthPanel();
+          return;
+        }
+        closeInlinePanels();
+        state.currentAuthSource = sourceId;
+        const source = state.sources.find((s) => s.id === sourceId);
+        if (!source) return;
+        const row = document.createElement("tr");
+        row.className = "auth-row";
+        row.innerHTML = `<td colspan="8">${buildAuthPanel(source)}</td>`;
+        currentRow.parentNode.insertBefore(row, currentRow.nextSibling);
+      }
+
+      async function saveAuthConfig(sourceId, row) {
+        const source = state.sources.find((s) => s.id === sourceId);
+        if (!source) return;
+        const cfg = { ...(source.config || {}) };
+        const getField = (name) => row.querySelector(`[data-field="${name}"]`);
+        const required = Boolean(getField("auth_required")?.checked);
+        const authType = getField("auth_type")?.value || "none";
+        const username = getField("auth_username")?.value.trim() || "";
+        const password = getField("auth_password")?.value || "";
+        const cookie = getField("auth_cookie")?.value.trim() || "";
+        const headerName = getField("auth_header_name")?.value.trim() || "";
+        const headerValue = getField("auth_header_value")?.value || "";
+
+        cfg.auth_required = required;
+        cfg.auth_type = authType;
+        cfg.auth_username = username || null;
+        cfg.auth_password = password || null;
+        cfg.auth_cookie = cookie || null;
+        cfg.auth_header_name = headerName || null;
+        cfg.auth_header_value = headerValue || null;
+
+        await api(`/api/sources/${sourceId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ config: cfg })
+        });
+        await loadSources();
       }
 
       async function loadYoutube() {
@@ -580,7 +818,7 @@
         dom.projectLabel.textContent = "No project selected";
         dom.projectLanguage.value = "";
         dom.projectGenInterval.value = "";
-        dom.items.innerHTML = "<div class='muted small'>Select a source to see recent items.</div>";
+        closeInlinePanels();
         await loadProjects();
       }
 
@@ -593,20 +831,40 @@
           scrapeSource(id);
         } else if (action === "view") {
           loadItems(id);
+        } else if (action === "login") {
+          openAuthPanel(id);
         } else if (action === "edit") {
           editSource(id);
+        } else if (action === "save-auth") {
+          const row = button.closest("tr.auth-row");
+          if (!row) return;
+          saveAuthConfig(id, row);
+        } else if (action === "cancel-auth") {
+          closeAuthPanel();
         }
       });
 
       dom.createProject.onclick = addProject;
       dom.addSource.onclick = addSource;
       dom.scrapeAll.onclick = scrapeAll;
+      dom.checkAll.onclick = checkAllSources;
       dom.saveYoutube.onclick = saveYoutube;
       dom.saveProject.onclick = saveProjectSettings;
       dom.deleteProject.onclick = deleteProject;
       dom.generateRoundup.onclick = generateRoundup;
       dom.renderRoundup.onclick = renderRoundup;
       dom.refresh.onclick = loadProjects;
+
+      document.addEventListener("click", (event) => {
+        if (!state.currentSource && !state.currentAuthSource) return;
+        const withinItems = event.target.closest("tr.items-row");
+        const withinAuth = event.target.closest("tr.auth-row");
+        const withinViewButton = event.target.closest("button[data-action='view']");
+        const withinLoginButton = event.target.closest("button[data-action='login']");
+        if (!withinItems && !withinAuth && !withinViewButton && !withinLoginButton) {
+          closeInlinePanels();
+        }
+      });
 
       loadProjects().catch((err) => {
         console.error(err);

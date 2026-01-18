@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 from .config import get_settings
+from .admin import ingest_source_items
 from .media.audio import render_audio_roundup
 from .media.short_video import render_short_video
 from .pipeline import (
@@ -45,6 +46,11 @@ def main() -> None:
     sub.add_parser("scrape", help="Scrape configured sources once")
     sub.add_parser("extract-links", help="Extract article URLs from category pages")
     sub.add_parser("scrape-articles", help="Scrape full articles from URLs")
+    ingest_sources = sub.add_parser("ingest-sources", help="Ingest source items into articles")
+    ingest_sources.add_argument("--limit", type=int, default=20, help="Max source items to ingest")
+    ingest_sources.add_argument(
+        "--no-fetch", action="store_true", help="Use stored excerpts without fetching full pages"
+    )
 
     sub.add_parser("extract", help="Run extraction once")
     sub.add_parser("judge", help="Run first judge once")
@@ -86,6 +92,10 @@ def main() -> None:
     if args.command == "scrape-articles":
         count = run_scrape_articles()
         print(f"articles_scraped={count}")
+        return
+    if args.command == "ingest-sources":
+        count = ingest_source_items(limit=args.limit, fetch_full=not args.no_fetch)
+        print(f"ingested_sources={count}")
         return
 
     if args.command == "extract":
