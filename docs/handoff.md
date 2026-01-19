@@ -1,5 +1,26 @@
 # Handoff Notes
-Last updated: 2026-01-18
+Last updated: 2026-01-19
+
+## Launch prep (remainder / what’s left before going live)
+1. Verify end-to-end pipeline per project (scrape → ingest → extract → score → audio roundup → render audio/video).
+2. Add scheduling (daily runs per project; retries + basic logging).
+3. Create platform accounts (YouTube channels per topic; optional Meta pages + TikTok accounts).
+4. Connect metrics (start with YouTube analytics; add Meta/TikTok later).
+
+## Current launch configuration
+- Topics (EN-only for now):
+  - Celebrities / Entertainment
+  - TV & Streaming Recaps
+  - Sports (results + storylines)
+  - Viral / Human-interest
+  - Nostalgia / Pop-culture history
+- Projects for the 5 topics created in Supabase (seeded).
+- Sources seeded (RSS + Reddit link posts + Google News RSS per topic).
+- Audio roundup now uses full article content (truncated to fit limits).
+- Audio roundup script targets 5–7 minutes with a teaser rundown of all stories first.
+- Audio roundup generates an image prompt for a static episode thumbnail.
+- New media layout: per-post folders under `media_out/roundup/{post_id}/`.
+- Temp render assets now auto-clean after successful render.
 
 ## Summary of this session (2026-01-18)
 - Added F1 sources to project and expanded Admin UI for inline item viewing + auth management per source.
