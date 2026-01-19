@@ -355,7 +355,7 @@ def fetch_for_audio_roundup(
     since = datetime.now(timezone.utc) - timedelta(hours=hours)
     query = (
         sb.table("articles")
-        .select("id, title, summary, judge_score, scraped_at")
+        .select("id, title, summary, content, judge_score, scraped_at")
         .eq("processed", True)
         .eq("scored", True)
         .eq("unusable", False)
@@ -420,10 +420,17 @@ def run_audio_roundup(project_id: str | None = None, language: str | None = None
     )
     if not items:
         return 0
-    stories = [
-        {"title": item.get("title"), "summary": item.get("summary")}
-        for item in items
-    ]
+    stories = []
+    for item in items:
+        summary = item.get("summary") or ""
+        content = item.get("content") or ""
+        stories.append(
+            {
+                "title": item.get("title"),
+                "summary": summary,
+                "content": content if content.strip() else summary,
+            }
+        )
     content = generate_audio_roundup(stories, language=language)
     post = insert_audio_roundup(settings.audio_roundup_model, content)
     if post:

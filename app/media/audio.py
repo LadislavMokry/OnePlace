@@ -73,4 +73,5 @@ def render_audio_roundup(dialogue: list[dict], output_path: Path) -> Path:
     import subprocess
 
     subprocess.run(cmd, check=True, cwd=tmp_dir)
+    shutil.rmtree(tmp_dir, ignore_errors=True)
     return output_path

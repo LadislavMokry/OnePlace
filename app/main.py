@@ -37,6 +37,12 @@ from .ingest import (
     split_text_into_sections,
 )
 from .media.audio import render_audio_roundup
+from .media.roundup_video import ensure_roundup_image, render_audio_roundup_video
+from .media.paths import (
+    roundup_audio_path,
+    roundup_image_path,
+    roundup_video_path,
+)
 from .pipeline import (
     fetch_latest_audio_roundup,
     run_audio_roundup,
@@ -338,7 +344,7 @@ def api_render_audio_roundup(post_id: str) -> dict:
     dialogue = content.get("dialogue") or []
     settings = get_settings()
     out_dir = Path(settings.media_output_dir)
-    out_path = out_dir / f"audio_roundup_{post_id}.mp3"
+    out_path = roundup_audio_path(out_dir, post_id)
     render_audio_roundup(dialogue, out_path)
     url = f"/api/audio-roundup/{post_id}/audio"
     update_post_media(post_id, url)
@@ -349,7 +355,80 @@ def api_render_audio_roundup(post_id: str) -> dict:
 def api_get_audio_roundup(post_id: str) -> FileResponse:
     settings = get_settings()
     out_dir = Path(settings.media_output_dir)
-    out_path = out_dir / f"audio_roundup_{post_id}.mp3"
+    out_path = roundup_audio_path(out_dir, post_id)
     if not out_path.exists():
-        raise HTTPException(status_code=404, detail="audio file not found")
+        legacy_path = out_dir / f"audio_roundup_{post_id}.mp3"
+        if not legacy_path.exists():
+            raise HTTPException(status_code=404, detail="audio file not found")
+        return FileResponse(legacy_path, media_type="audio/mpeg")
     return FileResponse(out_path, media_type="audio/mpeg")
+
+
+@app.post("/api/audio-roundup/{post_id}/render-video")
+def api_render_audio_roundup_video(post_id: str) -> dict:
+    row = (
+        get_supabase()
+        .table("posts")
+        .select("id, content")
+        .eq("id", post_id)
+        .eq("content_type", "audio_roundup")
+        .limit(1)
+        .execute()
+    )
+    data = row.data or []
+    if not data:
+        raise HTTPException(status_code=404, detail="audio_roundup not found")
+    content = data[0].get("content") or {}
+    settings = get_settings()
+    out_dir = Path(settings.media_output_dir)
+    out_path = roundup_video_path(out_dir, post_id)
+    render_audio_roundup_video(content, post_id, out_path)
+    url = f"/api/audio-roundup/{post_id}/video"
+    return {"status": "ok", "url": url}
+
+
+@app.get("/api/audio-roundup/{post_id}/video")
+def api_get_audio_roundup_video(post_id: str) -> FileResponse:
+    settings = get_settings()
+    out_dir = Path(settings.media_output_dir)
+    out_path = roundup_video_path(out_dir, post_id)
+    if not out_path.exists():
+        legacy_path = out_dir / f"audio_roundup_{post_id}.mp4"
+        if not legacy_path.exists():
+            raise HTTPException(status_code=404, detail="video file not found")
+        return FileResponse(legacy_path, media_type="video/mp4")
+    return FileResponse(out_path, media_type="video/mp4")
+
+
+@app.get("/api/audio-roundup/{post_id}/image")
+def api_get_audio_roundup_image(post_id: str, refresh: bool = Query(False)) -> FileResponse:
+    row = (
+        get_supabase()
+        .table("posts")
+        .select("id, content")
+        .eq("id", post_id)
+        .eq("content_type", "audio_roundup")
+        .limit(1)
+        .execute()
+    )
+    data = row.data or []
+    if not data:
+        raise HTTPException(status_code=404, detail="audio_roundup not found")
+    content = data[0].get("content") or {}
+    settings = get_settings()
+    out_dir = Path(settings.media_output_dir)
+    out_path = roundup_image_path(out_dir, post_id)
+    if refresh:
+        if out_path.exists():
+            out_path.unlink()
+        legacy_path = out_dir / f"audio_roundup_{post_id}.png"
+        if legacy_path.exists():
+            legacy_path.unlink()
+    prompt = content.get("image_prompt") or content.get("imagePrompt")
+    image_path = ensure_roundup_image(prompt, out_path, allow_placeholder=False)
+    if not image_path or not image_path.exists():
+        legacy_path = out_dir / f"audio_roundup_{post_id}.png"
+        if not legacy_path.exists():
+            raise HTTPException(status_code=404, detail="image not found")
+        return FileResponse(legacy_path, media_type="image/png")
+    return FileResponse(image_path, media_type="image/png")

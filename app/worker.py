@@ -6,7 +6,9 @@ from pathlib import Path
 from .config import get_settings
 from .admin import ingest_source_items
 from .media.audio import render_audio_roundup
+from .media.roundup_video import render_audio_roundup_video
 from .media.short_video import render_short_video
+from .media.paths import roundup_audio_path, roundup_video_path, short_video_path
 from .pipeline import (
     fetch_latest_audio_roundup,
     fetch_latest_selected_video,
@@ -61,6 +63,7 @@ def main() -> None:
     audio_roundup.add_argument("--project-id", type=str, default=None, help="Project ID for language settings")
     audio_roundup.add_argument("--language", type=str, default=None, help="Override language (en, es, sk)")
     sub.add_parser("render-audio-roundup", help="Render latest audio roundup to MP3")
+    sub.add_parser("render-audio-roundup-video", help="Render latest audio roundup to MP4")
     sub.add_parser("render-video", help="Render latest selected video to MP4")
 
     loop_parser = sub.add_parser("scrape-loop", help="Scrape on an interval")
@@ -131,9 +134,21 @@ def main() -> None:
         content = row.get("content") or {}
         dialogue = content.get("dialogue") or []
         out_dir = Path(settings.media_output_dir)
-        out_path = out_dir / f"audio_roundup_{row['id']}.mp3"
+        out_path = roundup_audio_path(out_dir, row["id"])
         render_audio_roundup(dialogue, out_path)
         print(f"audio_roundup_rendered=1 path={out_path}")
+        return
+    if args.command == "render-audio-roundup-video":
+        settings = get_settings()
+        row = fetch_latest_audio_roundup()
+        if not row:
+            print("audio_roundup_video_rendered=0")
+            return
+        content = row.get("content") or {}
+        out_dir = Path(settings.media_output_dir)
+        out_path = roundup_video_path(out_dir, row["id"])
+        render_audio_roundup_video(content, row["id"], out_path)
+        print(f"audio_roundup_video_rendered=1 path={out_path}")
         return
     if args.command == "render-video":
         settings = get_settings()
@@ -143,7 +158,7 @@ def main() -> None:
             return
         content = row.get("content") or {}
         out_dir = Path(settings.media_output_dir)
-        out_path = out_dir / f"video_{row['id']}.mp4"
+        out_path = short_video_path(out_dir, row["id"])
         render_short_video(content, out_path)
         update_post_media(row["id"], str(out_path))
         print(f"video_rendered=1 path={out_path}")

@@ -240,4 +240,5 @@ def render_short_video(content: dict, output_path: Path) -> Path:
         seconds_per_image=seconds_per_image,
         captions_path=captions_path,
     )
+    shutil.rmtree(tmp_dir, ignore_errors=True)
     return output_path

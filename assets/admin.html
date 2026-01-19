@@ -389,13 +389,16 @@
 
       <section class="panel">
         <h2>Audio Roundup</h2>
-        <div class="small muted">Generate script in project language, then render audio (TTS + ffmpeg required).</div>
+        <div class="small muted">Generate script in project language, render audio for Spotify, and render video for YouTube.</div>
         <div class="row" style="margin-top: 8px;">
           <button class="primary" id="generateRoundup">Generate Script</button>
           <button class="secondary" id="renderRoundup">Render Audio</button>
+          <button class="secondary" id="renderRoundupVideo">Render Video</button>
           <div id="roundupStatus" class="small muted"></div>
         </div>
+        <img id="roundupImage" alt="Roundup image preview" style="width: 100%; max-height: 240px; object-fit: cover; margin-top: 8px; display: none;" />
         <audio id="roundupAudio" controls style="width: 100%; margin-top: 8px;"></audio>
+        <video id="roundupVideo" controls style="width: 100%; margin-top: 8px; display: none;"></video>
       </section>
     </main>
     <script>
@@ -435,7 +438,9 @@
         ytToken: document.getElementById("ytToken"),
         ytStatus: document.getElementById("ytStatus"),
         roundupStatus: document.getElementById("roundupStatus"),
+        roundupImage: document.getElementById("roundupImage"),
         roundupAudio: document.getElementById("roundupAudio"),
+        roundupVideo: document.getElementById("roundupVideo"),
         createProject: document.getElementById("createProject"),
         addSource: document.getElementById("addSource"),
         scrapeAll: document.getElementById("scrapeAll"),
@@ -451,6 +456,7 @@
         deleteProject: document.getElementById("deleteProject"),
         generateRoundup: document.getElementById("generateRoundup"),
         renderRoundup: document.getElementById("renderRoundup"),
+        renderRoundupVideo: document.getElementById("renderRoundupVideo"),
         refresh: document.getElementById("refresh")
       };
 
@@ -988,14 +994,33 @@
             status.textContent = "No items available for roundup.";
             state.currentRoundup = null;
             dom.roundupAudio.removeAttribute("src");
+            dom.roundupVideo.removeAttribute("src");
+            dom.roundupVideo.style.display = "none";
+            dom.roundupImage.removeAttribute("src");
+            dom.roundupImage.style.display = "none";
             return;
           }
           state.currentRoundup = result.post;
           status.textContent = "Script ready. Render audio when ready.";
+          await loadRoundupImage(true);
         } catch (err) {
           console.error(err);
           status.textContent = "Failed to generate script.";
         }
+      }
+
+      async function loadRoundupImage(refresh = false) {
+        if (!state.currentRoundup?.id) return;
+        const img = dom.roundupImage;
+        const base = `/api/audio-roundup/${state.currentRoundup.id}/image`;
+        const url = refresh ? `${base}?refresh=1` : base;
+        img.onload = () => {
+          img.style.display = "block";
+        };
+        img.onerror = () => {
+          img.style.display = "none";
+        };
+        img.src = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
       }
 
       async function renderRoundup() {
@@ -1015,6 +1040,26 @@
         } catch (err) {
           console.error(err);
           status.textContent = "Failed to render audio. Check TTS + ffmpeg.";
+        }
+      }
+
+      async function renderRoundupVideo() {
+        if (!state.currentRoundup?.id) {
+          alert("Generate a script first.");
+          return;
+        }
+        const status = dom.roundupStatus;
+        status.textContent = "Rendering video...";
+        try {
+          const result = await api(`/api/audio-roundup/${state.currentRoundup.id}/render-video`, {
+            method: "POST"
+          });
+          dom.roundupVideo.src = `${result.url}?t=${Date.now()}`;
+          dom.roundupVideo.style.display = "block";
+          status.textContent = "Video ready.";
+        } catch (err) {
+          console.error(err);
+          status.textContent = "Failed to render video. Check image generation + ffmpeg.";
         }
       }
 
@@ -1113,6 +1158,7 @@
       dom.deleteProject.onclick = deleteProject;
       dom.generateRoundup.onclick = generateRoundup;
       dom.renderRoundup.onclick = renderRoundup;
+      dom.renderRoundupVideo.onclick = renderRoundupVideo;
       dom.refresh.onclick = loadProjects;
       dom.refreshArticles.onclick = loadArticles;
 
