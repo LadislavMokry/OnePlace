@@ -1,13 +1,11 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-This repo uses a Python-first architecture (FastAPI + worker scripts) for manual intake, scraping, extraction, scoring, and media generation. n8n workflows are deprecated and kept only as historical reference.
+This repo uses a Python-first architecture (FastAPI + worker scripts) for manual intake, scraping, extraction, scoring, and media generation.
 
 - Python app: `app/` (FastAPI intake API + worker scripts).
-- Workflow exports (legacy, reference only): `workflows/scraper-hourly-collection.json`, `workflows/link-extractor.json`, `workflows/cleanup-raw-html.json`, `workflows/test-supabase-connection.json`, `workflows/manual-intake.json`.
 - Database schema: `db/supabase-schema.sql` (tables for articles, posts, metrics).
-- Guides and specs: `docs/SETUP-GUIDE.md`, `docs/scraper-workflow-quick-start.md`, `docs/slovak-gossip-automation-spec (1).md`, `docs/implementation-plan.md`, `docs/todo.md`, `docs/manual-intake.md`.
-- Agent/n8n guidance: `CLAUDE.md` and `n8n-skills/` (reference only).
+- Guides and specs: `docs/SETUP-GUIDE.md`, `docs/slovak-gossip-automation-spec (1).md`, `docs/implementation-plan.md`, `docs/todo.md`, `docs/manual-intake.md`.
 
 ## Build, Test, and Development Commands
 There is no build step or test runner in this repo.
@@ -26,7 +24,6 @@ There is no build step or test runner in this repo.
 ## Coding Style & Naming Conventions
 - Python files use 4-space indentation.
 - JSON files use 2-space indentation; keep exports consistent.
-- Legacy workflow files use kebab-case names (example: `workflows/scraper-hourly-collection.json`).
 
 ## Testing Guidelines
 - Validate Supabase connectivity with a simple API call or SQL query.
