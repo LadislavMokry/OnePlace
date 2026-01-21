@@ -83,7 +83,7 @@ Last updated: 2026-01-21
 1. Create the other 4 YouTube brand channels once the account is verified; run OAuth per channel and save refresh tokens in `youtube_accounts`.
 2. Add other LLM script providers for A/B tests: Anthropic, xAI, Google.
 3. Add Inworld AI TTS with A/B test voices: Ashley, Deborah, Dennis, Edward, Sarah, Timothy.
-4. Consider adding a daily timer for `youtube-analytics` + `youtube-video-metrics`.
+4. Add a daily timer for `youtube-video-metrics` (checkpoint collection).
 5. At next session start: check systemd timers ran and review `/var/log/oneplace/*.log` for failures.
 
 ## Summary of this session (2026-01-17, later)
