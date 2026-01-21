@@ -84,6 +84,31 @@ def _normalize_tags(value: Any) -> list[str]:
     return []
 
 
+
+def _clean_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (list, dict)):
+        return ""
+    return str(value).replace("\x00", "").strip()
+
+
+def _safe_title(content: dict, project_name: str, language: str | None, max_len: int = 100) -> str:
+    title = _clean_text(content.get("title") or content.get("youtube_title"))
+    if not title:
+        title = _default_title(project_name, language)
+    title = title.strip()
+    if len(title) > max_len:
+        title = title[: max_len - 3].rstrip() + "..."
+    return title
+
+
+def _safe_description(content: dict, project_name: str, language: str | None, subscribe_url: str | None) -> str:
+    description = _clean_text(content.get("description") or content.get("youtube_description"))
+    if not description:
+        description = _default_description(project_name, language, subscribe_url)
+    return description
+
 def _default_title(project_name: str, language: str | None) -> str:
     date_str = datetime.now(timezone.utc).strftime("%b %d, %Y")
     if language and language.lower().startswith("es"):
@@ -206,10 +231,8 @@ def upload_latest_roundup_for_project(project_id: str) -> dict:
     language = _project_language(project_id) or "en"
     project_name = _project_name(project_id)
 
-    title = content.get("title") or content.get("youtube_title") or _default_title(project_name, language)
-    description = content.get("description") or content.get("youtube_description") or _default_description(
-        project_name, language, settings.podcast_subscribe_url
-    )
+    title = _safe_title(content, project_name, language)
+    description = _safe_description(content, project_name, language, settings.podcast_subscribe_url)
     tags = _normalize_tags(content.get("tags") or content.get("youtube_tags") or [])
 
     body = {
