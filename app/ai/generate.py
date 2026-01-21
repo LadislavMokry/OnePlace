@@ -1,17 +1,33 @@
 from app.ai.openai_client import OpenAIClient
 from app.config import get_settings
 
-SYSTEM_PROMPT = (
-    "You are a short-form video scriptwriter. Return JSON for a single video with keys: "
-    "title, hook, script, scenes, captions, duration_seconds. "
-    "scenes must be an array of 8-10 items. Each scene item must include: "
-    "scene_text, image_prompt, duration_seconds. "
-    "captions must be an array of short lines (<= 12 words each) aligned to the script. "
-    "Language: Slovak. Keep it punchy and current."
-)
+LANGUAGE_LABELS = {
+    "en": "English",
+    "es": "Spanish",
+    "sk": "Slovak",
+}
 
 
-def generate_video_variant(content: str, model: str, variant_id: int) -> dict:
+def _language_label(value: str | None) -> str:
+    if not value:
+        return LANGUAGE_LABELS["en"]
+    key = value.strip().lower()
+    return LANGUAGE_LABELS.get(key, value.strip())
+
+
+def _system_prompt(language: str | None) -> str:
+    language_label = _language_label(language)
+    return (
+        "You are a short-form video scriptwriter. Return JSON for a single video with keys: "
+        "title, hook, script, scenes, captions, duration_seconds. "
+        "scenes must be an array of 8-10 items. Each scene item must include: "
+        "scene_text, image_prompt, duration_seconds. "
+        "captions must be an array of short lines (<= 12 words each) aligned to the script. "
+        f"Language: {language_label}. Keep it punchy and current."
+    )
+
+
+def generate_video_variant(content: str, model: str, variant_id: int, language: str | None = None) -> dict:
     settings = get_settings()
     client = OpenAIClient()
     user = (
@@ -22,7 +38,7 @@ def generate_video_variant(content: str, model: str, variant_id: int) -> dict:
     )
     result = client.chat_json(
         model=model,
-        system=SYSTEM_PROMPT,
+        system=_system_prompt(language),
         user=user,
         temperature=0.7,
         max_tokens=1400,

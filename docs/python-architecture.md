@@ -25,24 +25,25 @@ This project uses a Python-first architecture:
 ---
 
 ### 2) Scraper Worker
-**Purpose**: Fetch category pages, extract article URLs, and store article HTML.
+**Purpose**: Scrape project sources (RSS/Reddit/YouTube/page) into `source_items`, then ingest to `articles`.
 
 **Code**
-- `app/scrape.py`
+- `app/admin.py` (project/source scraping + ingest)
 - `app/worker.py`
 
 **Run**
 ```bash
-python -m app.worker scrape
-python -m app.worker extract-links
-python -m app.worker scrape-articles
-python -m app.worker scrape-loop --interval 3600
+python -m app.worker scrape --project-id <project_id>
+python -m app.worker scrape-loop --interval 3600 --project-id <project_id>
+python -m app.worker ingest-sources --project-id <project_id>
 python -m app.worker extract
 python -m app.worker judge
 python -m app.worker generate
 python -m app.worker second-judge
 python -m app.worker audio-roundup
 ```
+
+**Note**: The legacy category-page scraper in `app/scrape.py` is deprecated.
 
 ---
 

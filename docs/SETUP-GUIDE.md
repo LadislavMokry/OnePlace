@@ -344,7 +344,7 @@ Once you've verified:
 
 Next, run:
 1. **API Intake** (FastAPI) for manual uploads/paste
-2. **Scraper Worker** (Python) for category pages
+2. **Scraper Worker** (Python) for project sources
 3. **AI Workers** (planned) for extraction/judging/generation
 
 ---

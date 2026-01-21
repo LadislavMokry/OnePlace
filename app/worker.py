@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 
 from .config import get_settings
-from .admin import ingest_source_items
+from .admin import ingest_source_items, list_projects, scrape_project
 from .media.audio import render_audio_roundup
 from .media.roundup_video import render_audio_roundup_video
 from .media.short_video import render_short_video
@@ -22,35 +22,43 @@ from .pipeline import (
     run_second_judge,
     update_post_media,
 )
-from .scrape import (
-    scrape_category_pages,
-    upsert_category_pages,
-    extract_article_urls,
-    scrape_article_pages,
-)
 
 
-def run_scrape_once() -> int:
-    rows = scrape_category_pages()
-    upserted = upsert_category_pages(rows)
-    return len(upserted)
-
-
-def run_extract_links(limit: int = 50) -> int:
-    return extract_article_urls(limit=limit)
-
-
-def run_scrape_articles(limit: int = 20) -> int:
-    return scrape_article_pages(limit=limit)
+def run_scrape_sources(project_id: str | None = None, max_items: int = 10) -> dict:
+    results: list[dict] = []
+    if project_id:
+        scrape_results = scrape_project(project_id, max_items=max_items)
+        results.append(
+            {
+                "project_id": project_id,
+                "results": [r.__dict__ for r in scrape_results],
+            }
+        )
+    else:
+        projects = list_projects()
+        for project in projects:
+            pid = project.get("id")
+            if not pid:
+                continue
+            scrape_results = scrape_project(pid, max_items=max_items)
+            results.append(
+                {
+                    "project_id": pid,
+                    "name": project.get("name"),
+                    "results": [r.__dict__ for r in scrape_results],
+                }
+            )
+    total = sum(r.get("count", 0) for row in results for r in row.get("results", []))
+    return {"total": total, "projects": results}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Background worker")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("scrape", help="Scrape configured sources once")
-    sub.add_parser("extract-links", help="Extract article URLs from category pages")
-    sub.add_parser("scrape-articles", help="Scrape full articles from URLs")
+    scrape_parser = sub.add_parser("scrape", help="Scrape configured sources once")
+    scrape_parser.add_argument("--project-id", type=str, default=None, help="Project ID filter")
+    scrape_parser.add_argument("--max-items", type=int, default=10, help="Max items per source")
     ingest_sources = sub.add_parser("ingest-sources", help="Ingest source items into articles")
     ingest_sources.add_argument("--limit", type=int, default=20, help="Max source items to ingest")
     ingest_sources.add_argument("--project-id", type=str, default=None, help="Project ID filter")
@@ -86,6 +94,8 @@ def main() -> None:
 
     loop_parser = sub.add_parser("scrape-loop", help="Scrape on an interval")
     loop_parser.add_argument("--interval", type=int, default=3600, help="Seconds between runs")
+    loop_parser.add_argument("--project-id", type=str, default=None, help="Project ID filter")
+    loop_parser.add_argument("--max-items", type=int, default=10, help="Max items per source")
 
     extract_loop = sub.add_parser("extract-loop", help="Extraction on an interval")
     extract_loop.add_argument("--interval", type=int, default=600, help="Seconds between runs")
@@ -102,18 +112,8 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "scrape":
-        count = run_scrape_once()
-        print(f"scraped={count}")
-        return
-
-    if args.command == "extract-links":
-        count = run_extract_links()
-        print(f"links_extracted={count}")
-        return
-
-    if args.command == "scrape-articles":
-        count = run_scrape_articles()
-        print(f"articles_scraped={count}")
+        result = run_scrape_sources(project_id=args.project_id, max_items=args.max_items)
+        print(f"scraped_total={result.get('total', 0)}")
         return
     if args.command == "ingest-sources":
         count = ingest_source_items(limit=args.limit, fetch_full=not args.no_fetch, project_id=args.project_id)
@@ -200,8 +200,8 @@ def main() -> None:
 
     if args.command == "scrape-loop":
         while True:
-            count = run_scrape_once()
-            print(f"scraped={count}")
+            result = run_scrape_sources(project_id=args.project_id, max_items=args.max_items)
+            print(f"scraped_total={result.get('total', 0)}")
             time.sleep(args.interval)
 
     if args.command == "extract-loop":

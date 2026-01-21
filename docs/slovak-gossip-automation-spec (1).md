@@ -31,7 +31,7 @@ Automated content generation and publishing system for uploaded text (PDF/DOCX/T
 ### High-Level Workflow
 ```
 Manual Intake (upload/paste) → Storage (Supabase) →
-Scraping (category pages) → Storage (Supabase) →
+Scraping (sources) → Storage (Supabase) →
 Extraction (condense) → First Judge → Content Generation →
 Second Judge → Media Creation → Publishing → Performance Tracking
 ```
@@ -53,7 +53,7 @@ Scraping and manual intake both feed the same downstream pipeline.
 **Output:** Plain text chunks stored as article rows
 
 ### 1B. Data Collection Module (Scraping)
-**Purpose:** Scrape category pages and store raw HTML for link extraction.
+**Purpose:** Scrape project sources (RSS/Reddit/page/YouTube) into `source_items` for ingestion.
 **Input:** Source URLs
 **Output:** Raw HTML stored in `articles` (or a dedicated table if added later)
 

@@ -62,7 +62,7 @@ Testing
 
 Phase 2: Scraper Worker
 Sources
-- [ ] Confirm initial website source list (category pages)
+- [ ] Confirm initial project source list (RSS/Reddit/page/YouTube)
 - [ ] Add sources:
   - https://www.topky.sk/se/15/Prominenti
   - https://www.cas.sk/r/prominenti
@@ -74,9 +74,8 @@ Sources
 
 Scraper Execution
 - [ ] python -m app.worker scrape runs without crash
-- [ ] Category pages inserted into category_pages
-- [ ] python -m app.worker extract-links inserts into article_urls
-- [ ] python -m app.worker scrape-articles inserts into articles
+- [ ] source_items inserted for each source
+- [ ] python -m app.worker ingest-sources inserts into articles
 - [ ] Non-200 response does not stop other sources
 - [ ] Deduped by source_url unique constraint
 - [ ] Validate new rows in Supabase

@@ -121,7 +121,7 @@ def fetch_ready_for_generation(limit: int = 10, project_id: str | None = None) -
     sb = get_supabase()
     query = (
         sb.table("articles")
-        .select("id, content, judge_score")
+        .select("id, content, judge_score, project_id")
         .eq("scored", True)
         .eq("unusable", False)
         .limit(limit)
@@ -166,6 +166,7 @@ def run_generation(limit: int = 10, project_id: str | None = None) -> int:
     model = models[0]
     items = fetch_ready_for_generation(limit=limit, project_id=project_id)
     count = 0
+    language_cache: dict[str, str | None] = {}
     for item in items:
         if has_video_posts(item["id"]):
             continue
@@ -175,8 +176,14 @@ def run_generation(limit: int = 10, project_id: str | None = None) -> int:
         content = (item.get("content") or "").strip()
         if not content:
             continue
+        language = None
+        project_ref = item.get("project_id")
+        if project_ref:
+            if project_ref not in language_cache:
+                language_cache[project_ref] = _project_language(project_ref)
+            language = language_cache.get(project_ref)
         for variant_id in range(1, settings.generation_variants + 1):
-            variant = generate_video_variant(content, model, variant_id)
+            variant = generate_video_variant(content, model, variant_id, language=language)
             count += insert_video_post(item["id"], model, variant)
     return count
 

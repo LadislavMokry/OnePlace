@@ -13,7 +13,7 @@ Build a Python-first system that ingests text (upload/paste) and scraped pages, 
 
 1.2 High-Level Flow
 Manual Intake (upload/paste) -> articles
-Scraping (category pages) -> articles
+Scraping (sources) -> source_items -> articles
 Extraction (content + summary) -> articles
 First Judge (score) -> articles
 Generation (video-only variants) -> posts
@@ -133,9 +133,8 @@ MVP list (configurable):
 - https://www.startitup.sk/kategoria/kultura/
 
 5.2 Behavior
-- Fetch category pages -> category_pages
-- Extract article URLs -> article_urls
-- Fetch article pages -> articles
+- Scrape project sources (RSS/Reddit/page/YouTube) -> source_items
+- Ingest source_items -> articles (full-text fetch + URL normalization + dedupe)
 - Use unique constraints to prevent duplicates
 
 5.3 Error Handling
@@ -274,7 +273,7 @@ Optional:
 13. Decisions + Open Questions
 
 Decisions
-- Start with website scraping (category pages). Social/video scraping deferred.
+- Start with source scraping (RSS/Reddit/page/YouTube). Social/video scraping deferred.
 - Video-first outputs: one-story shorts + optional audio roundup.
 - Video format: 9:16 vertical with captions and Ken Burns motion.
 - Use OpenAI models for early testing; finalize model list later.

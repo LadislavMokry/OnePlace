@@ -51,28 +51,16 @@ Notes:
   - Evidence: row returned with title `Manual Upload` and created_at `2026-01-05 10:26:36.866108+00`.
 
 ## 4) Scraper Worker
-- [x] Scrape category pages (`python -m app.worker scrape`)
-  - Evidence: `scraped=5`
-  - Reset check: `select sum(case when processed then 1 else 0 end) as processed_true, sum(case when processed = false then 1 else 0 end) as processed_false from category_pages;`
-  - Evidence: processed_false = 5
-- [x] Extract article URLs (`python -m app.worker extract-links`)
-  - Evidence: `links_extracted=0` (category_pages already processed; article_urls already populated).
-  - Evidence (after reset): `links_extracted=46`
-- [x] Scrape article pages (`python -m app.worker scrape-articles`)
-  - Evidence: `articles_scraped=20`
-  - Evidence (second run): `articles_scraped=20` (urls_remaining=4)
-  - Evidence (final run): `articles_scraped=4` (urls_remaining=0)
-- [x] Supabase: category_pages populated
-  - Query: `select count(*) as category_pages from category_pages;`
-  - Evidence: 5
-- [x] Supabase: article_urls populated (scraped=false decreases after scrape-articles)
-  - Query: `select count(*) as article_urls from article_urls;`
-  - Evidence: 47 (pre-reset)
-  - Query: `select count(*) as article_urls, sum(case when scraped then 1 else 0 end) as scraped_true, sum(case when scraped = false then 1 else 0 end) as scraped_false from article_urls;`
-  - Evidence: article_urls=91, scraped_true=47, scraped_false=44
-- [x] Supabase: articles populated from scraper
+- [ ] Scrape sources (`python -m app.worker scrape --project-id <id>`)
+  - Evidence: `scraped_total=<n>`
+- [ ] Supabase: source_items populated
+  - Query: `select count(*) from source_items;`
+  - Evidence:
+- [ ] Ingest source items (`python -m app.worker ingest-sources --project-id <id>`)
+  - Evidence: `ingested_sources=<n>`
+- [ ] Supabase: articles populated from sources
   - Query: `select count(*) from articles where source_website != 'manual';`
-  - Evidence: 71 (after first run), 91 (after second run)
+  - Evidence:
 
 ## 5) Extraction Worker (AI)
 - [x] Run extraction (`python -m app.worker extract`)
