@@ -501,11 +501,13 @@ def project_stats(project_id: str) -> dict:
         )
     stats.sort(key=lambda x: (x["hitrate"], x["total_articles"]), reverse=True)
     youtube_metrics = project_youtube_metrics(project_id)
+    youtube_video_metrics = project_youtube_video_metrics(project_id)
     account = get_youtube_account(project_id)
     return {
         "project_id": project_id,
         "sources": stats,
         "youtube_metrics": youtube_metrics,
+        "youtube_video_metrics": youtube_video_metrics,
         "youtube_channel_title": account.get("channel_title") if account else None,
     }
 
@@ -524,6 +526,83 @@ def project_youtube_metrics(project_id: str, days: int = 7) -> list[dict]:
         .execute()
     )
     return resp.data or []
+
+
+def _parse_post_title(content: Any) -> str | None:
+    if isinstance(content, dict):
+        return content.get("title") or content.get("youtube_title")
+    if isinstance(content, str):
+        try:
+            import json
+
+            parsed = json.loads(content)
+            if isinstance(parsed, dict):
+                return parsed.get("title") or parsed.get("youtube_title")
+        except Exception:
+            return None
+    return None
+
+
+def project_youtube_video_metrics(project_id: str, limit: int = 100) -> list[dict]:
+    sb = get_supabase()
+    metrics = (
+        sb.table("youtube_video_metrics")
+        .select(
+            "post_id, video_id, checkpoint, views, likes, comments, watch_time_minutes, "
+            "average_view_duration_seconds, collected_at"
+        )
+        .eq("project_id", project_id)
+        .order("collected_at", desc=True)
+        .limit(limit)
+        .execute()
+        .data
+        or []
+    )
+    if not metrics:
+        return []
+    post_ids = [m.get("post_id") for m in metrics if m.get("post_id")]
+    posts = (
+        sb.table("posts")
+        .select("id, post_url, posted_at, content, generating_model")
+        .in_("id", post_ids)
+        .execute()
+        .data
+        or []
+    )
+    post_map = {p.get("id"): p for p in posts if p.get("id")}
+    runs = (
+        sb.table("audio_generation_runs")
+        .select("post_id, script_model, tts_model, tts_voice, created_at")
+        .in_("post_id", post_ids)
+        .order("created_at", desc=True)
+        .execute()
+        .data
+        or []
+    )
+    run_map: dict[str, dict] = {}
+    for run in runs:
+        pid = run.get("post_id")
+        if pid and pid not in run_map:
+            run_map[pid] = run
+
+    rows: list[dict] = []
+    for metric in metrics:
+        post = post_map.get(metric.get("post_id")) or {}
+        run = run_map.get(metric.get("post_id")) or {}
+        title = _parse_post_title(post.get("content")) or "Audio Roundup"
+        rows.append(
+            {
+                **metric,
+                "post_url": post.get("post_url"),
+                "posted_at": post.get("posted_at"),
+                "title": title,
+                "script_model": run.get("script_model"),
+                "tts_model": run.get("tts_model"),
+                "tts_voice": run.get("tts_voice"),
+                "generating_model": post.get("generating_model"),
+            }
+        )
+    return rows
 
 
 def get_youtube_account(project_id: str) -> dict | None:

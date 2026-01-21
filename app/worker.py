@@ -11,6 +11,10 @@ from .media.short_video import render_short_video
 from .media.paths import roundup_audio_path, roundup_video_path, short_video_path
 from .youtube_upload import upload_latest_roundup_for_project, upload_latest_roundups_all
 from .youtube_analytics import fetch_youtube_analytics_for_project, fetch_youtube_analytics_all
+from .youtube_video_metrics import (
+    fetch_youtube_video_metrics_for_project,
+    fetch_youtube_video_metrics_all,
+)
 from .pipeline import (
     fetch_latest_audio_roundup,
     fetch_latest_audio_roundup_for_project,
@@ -105,6 +109,14 @@ def main() -> None:
         help="Fetch analytics for every project",
     )
     yt_analytics.add_argument("--days", type=int, default=7, help="Number of days back (ending yesterday)")
+    yt_video = sub.add_parser("youtube-video-metrics", help="Fetch YouTube per-video checkpoints")
+    yt_video.add_argument("--project-id", type=str, default=None, help="Project ID filter")
+    yt_video.add_argument(
+        "--all-projects",
+        action="store_true",
+        help="Fetch per-video checkpoints for every project",
+    )
+    yt_video.add_argument("--max-posts", type=int, default=50, help="Max recent posts to scan")
     pipeline_parser = sub.add_parser("pipeline", help="Run full pipeline per project")
     pipeline_parser.add_argument("--project-id", type=str, default=None, help="Project ID filter")
     pipeline_parser.add_argument("--max-items", type=int, default=10, help="Max items per source")
@@ -270,6 +282,23 @@ def main() -> None:
             print(f"youtube_analytics=1 rows={result.get('rows', 0)}")
         else:
             print(f"youtube_analytics=0 status={result.get('status')}")
+        return
+    if args.command == "youtube-video-metrics":
+        if args.all_projects:
+            results = fetch_youtube_video_metrics_all(max_posts=args.max_posts)
+            success = sum(1 for r in results if r.get("status") == "ok")
+            print(f"youtube_video_metrics_all={success}")
+            return
+        if not args.project_id:
+            print("youtube_video_metrics=0 error=missing_project_id")
+            return
+        result = fetch_youtube_video_metrics_for_project(args.project_id, max_posts=args.max_posts)
+        if result.get("status") == "ok":
+            print(
+                f"youtube_video_metrics=1 inserted={result.get('inserted', 0)} updated={result.get('updated', 0)}"
+            )
+        else:
+            print(f"youtube_video_metrics=0 status={result.get('status')}")
         return
     if args.command == "pipeline":
         if args.project_id:

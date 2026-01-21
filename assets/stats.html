@@ -141,6 +141,29 @@
           <tfoot id="youtubeFooter"></tfoot>
         </table>
       </section>
+
+      <section class="panel">
+        <h2>YouTube Video Checkpoints</h2>
+        <div class="small muted" id="youtubeVideoMeta">No video checkpoints yet.</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Video</th>
+              <th>Posted</th>
+              <th>Checkpoint</th>
+              <th>Views</th>
+              <th>Likes</th>
+              <th>Comments</th>
+              <th>Watch (min)</th>
+              <th>Avg View (sec)</th>
+              <th>Script LLM</th>
+              <th>TTS Model</th>
+              <th>Voice</th>
+            </tr>
+          </thead>
+          <tbody id="youtubeVideoBody"></tbody>
+        </table>
+      </section>
     </main>
     <script>
       const dom = {
@@ -150,7 +173,9 @@
         refresh: document.getElementById("refresh"),
         youtubeBody: document.getElementById("youtubeBody"),
         youtubeFooter: document.getElementById("youtubeFooter"),
-        youtubeMeta: document.getElementById("youtubeMeta")
+        youtubeMeta: document.getElementById("youtubeMeta"),
+        youtubeVideoBody: document.getElementById("youtubeVideoBody"),
+        youtubeVideoMeta: document.getElementById("youtubeVideoMeta")
       };
 
       async function api(path, options = {}) {
@@ -200,6 +225,7 @@
         const data = await api(`/api/projects/${projectId}/stats`);
         const rows = data.sources || [];
         const ytRows = data.youtube_metrics || [];
+        const ytVideoRows = data.youtube_video_metrics || [];
         const channelTitle = data.youtube_channel_title || "";
         dom.projectMeta.textContent = `Sources: ${rows.length}`;
         dom.statsBody.innerHTML = "";
@@ -271,6 +297,34 @@
             <td class="small"><strong>${fmtInt(totalSubs)}</strong></td>
           </tr>
         `;
+
+        dom.youtubeVideoBody.innerHTML = "";
+        if (!ytVideoRows.length) {
+          dom.youtubeVideoMeta.textContent = "No video checkpoints yet.";
+          dom.youtubeVideoBody.innerHTML =
+            "<tr><td colspan='11' class='small muted'>No data yet.</td></tr>";
+          return;
+        }
+        dom.youtubeVideoMeta.textContent = `Rows: ${ytVideoRows.length}`;
+        ytVideoRows.forEach((row) => {
+          const title = row.title || "Audio Roundup";
+          const link = row.post_url ? `<a href='${row.post_url}' target='_blank'>${title}</a>` : title;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="small">${link}</td>
+            <td class="small">${formatDate(row.posted_at)}</td>
+            <td class="small">${row.checkpoint || "-"}</td>
+            <td class="small">${fmtInt(row.views)}</td>
+            <td class="small">${fmtInt(row.likes)}</td>
+            <td class="small">${fmtInt(row.comments)}</td>
+            <td class="small">${fmtFloat(row.watch_time_minutes)}</td>
+            <td class="small">${fmtFloat(row.average_view_duration_seconds, 0)}s</td>
+            <td class="small">${row.script_model || row.generating_model || "-"}</td>
+            <td class="small">${row.tts_model || "-"}</td>
+            <td class="small">${row.tts_voice || "-"}</td>
+          `;
+          dom.youtubeVideoBody.appendChild(tr);
+        });
       }
 
       dom.projectSelect.onchange = loadStats;
