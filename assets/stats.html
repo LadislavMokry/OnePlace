@@ -121,13 +121,36 @@
           <tbody id="statsBody"></tbody>
         </table>
       </section>
+
+      <section class="panel">
+        <h2>YouTube Analytics (last 7 days)</h2>
+        <div class="small muted" id="youtubeMeta">No YouTube data yet.</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Views</th>
+              <th>Watch (min)</th>
+              <th>Avg View (sec)</th>
+              <th>Likes</th>
+              <th>Comments</th>
+              <th>Subs Gained</th>
+            </tr>
+          </thead>
+          <tbody id="youtubeBody"></tbody>
+          <tfoot id="youtubeFooter"></tfoot>
+        </table>
+      </section>
     </main>
     <script>
       const dom = {
         projectSelect: document.getElementById("projectSelect"),
         statsBody: document.getElementById("statsBody"),
         projectMeta: document.getElementById("projectMeta"),
-        refresh: document.getElementById("refresh")
+        refresh: document.getElementById("refresh"),
+        youtubeBody: document.getElementById("youtubeBody"),
+        youtubeFooter: document.getElementById("youtubeFooter"),
+        youtubeMeta: document.getElementById("youtubeMeta")
       };
 
       async function api(path, options = {}) {
@@ -144,6 +167,16 @@
 
       function formatDate(value) {
         return value ? value.split("T")[0] : "-";
+      }
+
+      function fmtInt(value) {
+        if (value === null || value === undefined) return "-";
+        return Number(value).toLocaleString();
+      }
+
+      function fmtFloat(value, digits = 1) {
+        if (value === null || value === undefined) return "-";
+        return Number(value).toFixed(digits);
       }
 
       async function loadProjects() {
@@ -166,24 +199,78 @@
         if (!projectId) return;
         const data = await api(`/api/projects/${projectId}/stats`);
         const rows = data.sources || [];
+        const ytRows = data.youtube_metrics || [];
+        const channelTitle = data.youtube_channel_title || "";
         dom.projectMeta.textContent = `Sources: ${rows.length}`;
         dom.statsBody.innerHTML = "";
         if (!rows.length) {
           dom.statsBody.innerHTML = "<tr><td colspan='6' class='small muted'>No data yet.</td></tr>";
+        } else {
+          rows.forEach((row) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${row.source_name || "-"}</td>
+              <td class="small">${row.total_articles}</td>
+              <td class="small">${row.used_in_audio}</td>
+              <td class="small">${row.hitrate}%</td>
+              <td class="small">${row.avg_score ?? "-"}</td>
+              <td class="small">${formatDate(row.last_scraped_at)}</td>
+            `;
+            dom.statsBody.appendChild(tr);
+          });
+        }
+
+        dom.youtubeBody.innerHTML = "";
+        dom.youtubeFooter.innerHTML = "";
+        if (channelTitle) {
+          dom.youtubeMeta.textContent = `Channel: ${channelTitle}`;
+        } else {
+          dom.youtubeMeta.textContent = "Channel not connected.";
+        }
+        if (!ytRows.length) {
+          dom.youtubeBody.innerHTML = "<tr><td colspan='7' class='small muted'>No YouTube data yet.</td></tr>";
           return;
         }
-        rows.forEach((row) => {
+        let totalViews = 0;
+        let totalWatch = 0;
+        let totalLikes = 0;
+        let totalComments = 0;
+        let totalSubs = 0;
+        let weightedDuration = 0;
+        ytRows.forEach((row) => {
+          const views = Number(row.views || 0);
+          const watch = Number(row.watch_time_minutes || 0);
+          const avgDur = Number(row.average_view_duration_seconds || 0);
+          totalViews += views;
+          totalWatch += watch;
+          totalLikes += Number(row.likes || 0);
+          totalComments += Number(row.comments || 0);
+          totalSubs += Number(row.subscribers_gained || 0);
+          weightedDuration += avgDur * views;
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${row.source_name || "-"}</td>
-            <td class="small">${row.total_articles}</td>
-            <td class="small">${row.used_in_audio}</td>
-            <td class="small">${row.hitrate}%</td>
-            <td class="small">${row.avg_score ?? "-"}</td>
-            <td class="small">${formatDate(row.last_scraped_at)}</td>
+            <td class="small">${formatDate(row.report_date)}</td>
+            <td class="small">${fmtInt(row.views)}</td>
+            <td class="small">${fmtFloat(row.watch_time_minutes)}</td>
+            <td class="small">${fmtFloat(row.average_view_duration_seconds, 0)}s</td>
+            <td class="small">${fmtInt(row.likes)}</td>
+            <td class="small">${fmtInt(row.comments)}</td>
+            <td class="small">${fmtInt(row.subscribers_gained)}</td>
           `;
-          dom.statsBody.appendChild(tr);
+          dom.youtubeBody.appendChild(tr);
         });
+        const avgDuration = totalViews ? weightedDuration / totalViews : 0;
+        dom.youtubeFooter.innerHTML = `
+          <tr>
+            <td class="small"><strong>Total</strong></td>
+            <td class="small"><strong>${fmtInt(totalViews)}</strong></td>
+            <td class="small"><strong>${fmtFloat(totalWatch)}</strong></td>
+            <td class="small"><strong>${fmtFloat(avgDuration, 0)}s</strong></td>
+            <td class="small"><strong>${fmtInt(totalLikes)}</strong></td>
+            <td class="small"><strong>${fmtInt(totalComments)}</strong></td>
+            <td class="small"><strong>${fmtInt(totalSubs)}</strong></td>
+          </tr>
+        `;
       }
 
       dom.projectSelect.onchange = loadStats;

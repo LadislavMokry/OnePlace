@@ -10,6 +10,7 @@ from .media.roundup_video import render_audio_roundup_video
 from .media.short_video import render_short_video
 from .media.paths import roundup_audio_path, roundup_video_path, short_video_path
 from .youtube_upload import upload_latest_roundup_for_project, upload_latest_roundups_all
+from .youtube_analytics import fetch_youtube_analytics_for_project, fetch_youtube_analytics_all
 from .pipeline import (
     fetch_latest_audio_roundup,
     fetch_latest_audio_roundup_for_project,
@@ -96,6 +97,14 @@ def main() -> None:
         action="store_true",
         help="Upload latest audio roundups for every project",
     )
+    yt_analytics = sub.add_parser("youtube-analytics", help="Fetch YouTube analytics")
+    yt_analytics.add_argument("--project-id", type=str, default=None, help="Project ID filter")
+    yt_analytics.add_argument(
+        "--all-projects",
+        action="store_true",
+        help="Fetch analytics for every project",
+    )
+    yt_analytics.add_argument("--days", type=int, default=7, help="Number of days back (ending yesterday)")
     pipeline_parser = sub.add_parser("pipeline", help="Run full pipeline per project")
     pipeline_parser.add_argument("--project-id", type=str, default=None, help="Project ID filter")
     pipeline_parser.add_argument("--max-items", type=int, default=10, help="Max items per source")
@@ -246,6 +255,21 @@ def main() -> None:
             print(f"youtube_upload=1 url={result.get('url')}")
         else:
             print(f"youtube_upload=0 status={result.get('status')}")
+        return
+    if args.command == "youtube-analytics":
+        if args.all_projects:
+            results = fetch_youtube_analytics_all(days=args.days)
+            success = sum(1 for r in results if r.get("status") == "ok")
+            print(f"youtube_analytics_all={success}")
+            return
+        if not args.project_id:
+            print("youtube_analytics=0 error=missing_project_id")
+            return
+        result = fetch_youtube_analytics_for_project(args.project_id, days=args.days)
+        if result.get("status") == "ok":
+            print(f"youtube_analytics=1 rows={result.get('rows', 0)}")
+        else:
+            print(f"youtube_analytics=0 status={result.get('status')}")
         return
     if args.command == "pipeline":
         if args.project_id:

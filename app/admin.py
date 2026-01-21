@@ -500,7 +500,30 @@ def project_stats(project_id: str) -> dict:
             }
         )
     stats.sort(key=lambda x: (x["hitrate"], x["total_articles"]), reverse=True)
-    return {"project_id": project_id, "sources": stats}
+    youtube_metrics = project_youtube_metrics(project_id)
+    account = get_youtube_account(project_id)
+    return {
+        "project_id": project_id,
+        "sources": stats,
+        "youtube_metrics": youtube_metrics,
+        "youtube_channel_title": account.get("channel_title") if account else None,
+    }
+
+
+def project_youtube_metrics(project_id: str, days: int = 7) -> list[dict]:
+    sb = get_supabase()
+    resp = (
+        sb.table("youtube_metrics")
+        .select(
+            "report_date, views, watch_time_minutes, average_view_duration_seconds, "
+            "likes, comments, subscribers_gained"
+        )
+        .eq("project_id", project_id)
+        .order("report_date", desc=True)
+        .limit(days)
+        .execute()
+    )
+    return resp.data or []
 
 
 def get_youtube_account(project_id: str) -> dict | None:
