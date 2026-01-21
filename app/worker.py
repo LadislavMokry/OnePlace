@@ -9,6 +9,7 @@ from .media.audio import render_audio_roundup
 from .media.roundup_video import render_audio_roundup_video
 from .media.short_video import render_short_video
 from .media.paths import roundup_audio_path, roundup_video_path, short_video_path
+from .youtube_upload import upload_latest_roundup_for_project, upload_latest_roundups_all
 from .pipeline import (
     fetch_latest_audio_roundup,
     fetch_latest_audio_roundup_for_project,
@@ -88,6 +89,13 @@ def main() -> None:
     )
     sub.add_parser("render-audio-roundup-video", help="Render latest audio roundup to MP4")
     sub.add_parser("render-video", help="Render latest selected video to MP4")
+    yt_upload = sub.add_parser("youtube-upload", help="Upload latest audio roundup video to YouTube")
+    yt_upload.add_argument("--project-id", type=str, default=None, help="Project ID filter")
+    yt_upload.add_argument(
+        "--all-projects",
+        action="store_true",
+        help="Upload latest audio roundups for every project",
+    )
     pipeline_parser = sub.add_parser("pipeline", help="Run full pipeline per project")
     pipeline_parser.add_argument("--project-id", type=str, default=None, help="Project ID filter")
     pipeline_parser.add_argument("--max-items", type=int, default=10, help="Max items per source")
@@ -223,6 +231,21 @@ def main() -> None:
         render_short_video(content, out_path)
         update_post_media(row["id"], str(out_path))
         print(f"video_rendered=1 path={out_path}")
+        return
+    if args.command == "youtube-upload":
+        if args.all_projects:
+            results = upload_latest_roundups_all()
+            success = sum(1 for r in results if r.get("status") == "ok")
+            print(f"youtube_upload_all={success}")
+            return
+        if not args.project_id:
+            print("youtube_upload=0 error=missing_project_id")
+            return
+        result = upload_latest_roundup_for_project(args.project_id)
+        if result.get("status") == "ok":
+            print(f"youtube_upload=1 url={result.get('url')}")
+        else:
+            print(f"youtube_upload=0 status={result.get('status')}")
         return
     if args.command == "pipeline":
         if args.project_id:

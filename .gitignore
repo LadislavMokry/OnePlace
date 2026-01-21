@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 *.log
 media_out/
+credentials.json
 
 # Dependencies
 node_modules/

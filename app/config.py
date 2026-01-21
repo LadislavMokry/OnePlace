@@ -48,6 +48,11 @@ class Settings(BaseModel):
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/120.0.0.0 Safari/537.36"
     )
+    youtube_client_id: str | None = None
+    youtube_client_secret: str | None = None
+    youtube_token_uri: str = "https://oauth2.googleapis.com/token"
+    youtube_privacy_status: str = "public"
+    podcast_subscribe_url: str | None = None
 
 
 @lru_cache(maxsize=1)
@@ -97,4 +102,9 @@ def get_settings() -> Settings:
         in ("1", "true", "yes"),
         enable_tts=os.environ.get("ENABLE_TTS", "false").lower() in ("1", "true", "yes"),
         enable_asr=os.environ.get("ENABLE_ASR", "false").lower() in ("1", "true", "yes"),
+        youtube_client_id=os.environ.get("YOUTUBE_CLIENT_ID"),
+        youtube_client_secret=os.environ.get("YOUTUBE_CLIENT_SECRET"),
+        youtube_token_uri=os.environ.get("YOUTUBE_TOKEN_URI", "https://oauth2.googleapis.com/token"),
+        youtube_privacy_status=os.environ.get("YOUTUBE_PRIVACY_STATUS", "public"),
+        podcast_subscribe_url=os.environ.get("PODCAST_SUBSCRIBE_URL"),
     )
