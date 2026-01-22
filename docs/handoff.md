@@ -1,5 +1,5 @@
 # Handoff Notes
-Last updated: 2026-01-21
+Last updated: 2026-01-22
 
 ## Summary of this session (2026-01-21)
 - YouTube uploads enabled end-to-end for audio roundups (OAuth stored in `youtube_accounts`).
@@ -180,3 +180,53 @@ Last updated: 2026-01-21
 - Render video:
   - `rm -rf media_out/tmp_video`
   - `python -m app.worker render-video`
+
+---
+
+## In-progress notes (2026-01-22) – Resume here
+
+### What we did
+- **Added systemd timers/services** for YouTube analytics + video metrics:
+  - `oneplace-youtube-analytics.timer` (daily 07:15 UTC)
+  - `oneplace-youtube-video-metrics.timer` (hourly, randomized delay 5m)
+  - Installed on server and enabled; manual smoke-test succeeded.
+- **Upgraded server Python to 3.11** (new venv, reinstalled requirements). `oneplace-api.service` is running on Python 3.11.
+- **Switched TTS provider to Inworld** on server via `.env.local`:
+  - `TTS_PROVIDER=inworld`
+  - `INWORLD_BASE64_KEY=...`
+  - `TTS_MAX_CHARS=2000`
+  - `ENABLE_TTS=true`
+- Verified Inworld key by hitting **list voices** (HTTP 200).
+- Verified **TTS synth works** with model `inworld-tts-1` and `inworld-tts-1.5-max` via curl.
+
+### Current blocker: audio roundup render failure
+### Audio roundup render failure – fixed
+- Root cause was **fallback voices** on older posts:
+  - Older audio-roundup posts lacked `tts_voice_a/b`, so renderer fell back to defaults (`onyx`/`nova`), which are **invalid** for Inworld.
+  - Inworld returned HTTP 404 when asked to synthesize those voices.
+- Fix applied on server:
+  - `.env.local` updated with Inworld defaults:
+    - `AUDIO_ROUNDUP_VOICE_A=Timothy`
+    - `AUDIO_ROUNDUP_VOICE_B=Ashley`
+    - `INWORLD_TTS_MODEL=inworld-tts-1.5-max`
+- Manual render succeeded:
+  - `/root/OnePlace/.venv/bin/python -m app.worker render-audio-roundup --all-projects`
+  - Output ended with `audio_roundup_rendered_all=6`
+- After manual success, restart service:
+  - `sudo systemctl reset-failed oneplace-render-roundup.service`
+  - `sudo systemctl restart oneplace-render-roundup.service`
+
+### YouTube upload failure (unresolved)
+- `oneplace-youtube-upload.service` failed when restarted after the Python upgrade.
+- Journald output didn’t show the traceback; need to run manually to see real error:
+  - `/root/OnePlace/.venv/bin/python -m app.worker youtube-upload --all-projects`
+  - Paste the traceback and fix accordingly.
+
+### Server status checks
+- Timers list now includes:
+  - pipeline, generate, second-judge, audio-roundup, render-roundup, youtube-upload, cleanup
+  - **new**: youtube-analytics, youtube-video-metrics
+- Commands used:
+  - `systemctl list-timers --all | grep oneplace`
+  - `systemctl status oneplace-*.service --no-pager`
+  - `journalctl -u oneplace-*.service --since "24 hours ago" --no-pager`

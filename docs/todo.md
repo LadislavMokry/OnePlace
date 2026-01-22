@@ -1,5 +1,5 @@
 # Content Automation - Task List (Python)
-Last updated: 2026-01-20
+Last updated: 2026-01-22
 
 Legend:
 - [ ] Not started
@@ -56,6 +56,7 @@ Legend:
   - Generation + second judge (staggered)
   - Audio roundup (daily)
   - Cleanup every 48 hours
+- [✓] YouTube analytics + video metrics timers added (daily + hourly).
 - [ ] Verify cleanup wipes unusable content + removes old source_items
 
 ---
@@ -64,6 +65,7 @@ Legend:
 - [ ] Add YouTube OAuth upload worker
 - [ ] Add posting worker + rate limiting
 - [ ] Add metrics ingestion (YouTube first)
+- [ ] Upgrade server Python to 3.11+ before 2026-10-04 (google.api_core drops 3.10 support).
 - [ ] Add cost tracking in stats view
 - [ ] Add subscription CTA tracking (short-form -> podcast conversion)
 - [ ] TTS A/B: rotate Inworld voice pairs (3x3) across projects, store voice pair per audio roundup.
