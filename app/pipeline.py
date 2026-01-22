@@ -167,6 +167,7 @@ def run_generation(limit: int = 10, project_id: str | None = None) -> int:
     items = fetch_ready_for_generation(limit=limit, project_id=project_id)
     count = 0
     language_cache: dict[str, str | None] = {}
+    prompt_cache: dict[str, dict] = {}
     for item in items:
         if has_video_posts(item["id"]):
             continue
@@ -177,13 +178,23 @@ def run_generation(limit: int = 10, project_id: str | None = None) -> int:
         if not content:
             continue
         language = None
+        prompt_extra = None
         project_ref = item.get("project_id")
         if project_ref:
             if project_ref not in language_cache:
                 language_cache[project_ref] = _project_language(project_ref)
+            if project_ref not in prompt_cache:
+                prompt_cache[project_ref] = _project_prompts(project_ref)
             language = language_cache.get(project_ref)
+            prompt_extra = (prompt_cache.get(project_ref) or {}).get("video_prompt_extra")
         for variant_id in range(1, settings.generation_variants + 1):
-            variant = generate_video_variant(content, model, variant_id, language=language)
+            variant = generate_video_variant(
+                content,
+                model,
+                variant_id,
+                language=language,
+                extra_prompt=prompt_extra,
+            )
             count += insert_video_post(item["id"], model, variant)
     return count
 
@@ -419,10 +430,29 @@ def _project_language(project_id: str) -> str | None:
     return data[0].get("language") if data else None
 
 
+def _project_prompts(project_id: str) -> dict:
+    sb = get_supabase()
+    try:
+        resp = (
+            sb.table("projects")
+            .select("video_prompt_extra,audio_roundup_prompt_extra")
+            .eq("id", project_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception:
+        return {}
+    data = resp.data or []
+    return data[0] if data else {}
+
+
 def run_audio_roundup(project_id: str | None = None, language: str | None = None) -> int:
     settings = get_settings()
+    prompt_extra = None
     if project_id and not language:
         language = _project_language(project_id)
+    if project_id:
+        prompt_extra = _project_prompts(project_id).get("audio_roundup_prompt_extra")
     items = fetch_for_audio_roundup(
         limit=settings.audio_roundup_size, hours=settings.audio_roundup_hours, project_id=project_id
     )
@@ -439,7 +469,7 @@ def run_audio_roundup(project_id: str | None = None, language: str | None = None
                 "content": content if content.strip() else summary,
             }
         )
-    content = generate_audio_roundup(stories, language=language)
+    content = generate_audio_roundup(stories, language=language, extra_prompt=prompt_extra)
     post = insert_audio_roundup(settings.audio_roundup_model, content)
     if post:
         usage_rows = [

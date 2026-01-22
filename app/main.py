@@ -66,6 +66,8 @@ class ProjectCreate(BaseModel):
     generation_interval_hours: int | None = None
     unusable_score_threshold: int | None = None
     unusable_age_hours: int | None = None
+    video_prompt_extra: str | None = None
+    audio_roundup_prompt_extra: str | None = None
 
 
 class ProjectUpdate(BaseModel):
@@ -76,6 +78,8 @@ class ProjectUpdate(BaseModel):
     last_generated_at: str | None = None
     unusable_score_threshold: int | None = None
     unusable_age_hours: int | None = None
+    video_prompt_extra: str | None = None
+    audio_roundup_prompt_extra: str | None = None
 
 
 class SourceCreate(BaseModel):
@@ -177,6 +181,8 @@ def api_create_project(payload: ProjectCreate) -> dict:
         payload.generation_interval_hours,
         payload.unusable_score_threshold,
         payload.unusable_age_hours,
+        payload.video_prompt_extra,
+        payload.audio_roundup_prompt_extra,
     )
 
 

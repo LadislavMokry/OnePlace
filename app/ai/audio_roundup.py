@@ -17,9 +17,9 @@ def _language_label(value: str | None) -> str:
     return LANGUAGE_LABELS.get(key, value.strip())
 
 
-def _system_prompt(language: str | None) -> str:
+def _system_prompt(language: str | None, extra_prompt: str | None = None) -> str:
     language_label = _language_label(language)
-    return (
+    base = (
         f"You are a podcast writer. Write the script in {language_label}. "
         "Create a 5-7 minute audio roundup script for two hosts "
         "(host_a male, host_b female). You will receive items with title, "
@@ -38,6 +38,9 @@ def _system_prompt(language: str | None) -> str:
         "podcast thumbnail background (no text or logos). Keep it concise, "
         "current, and engaging."
     )
+    if extra_prompt and extra_prompt.strip():
+        return base + "\n\nAdditional instructions: " + extra_prompt.strip()
+    return base
 
 
 def _trim(text: str, max_chars: int) -> str:
@@ -48,7 +51,11 @@ def _trim(text: str, max_chars: int) -> str:
     return text[: max_chars - 1].rstrip() + "…"
 
 
-def generate_audio_roundup(items: list[dict], language: str | None = None) -> dict:
+def generate_audio_roundup(
+    items: list[dict],
+    language: str | None = None,
+    extra_prompt: str | None = None,
+) -> dict:
     settings = get_settings()
     client = OpenAIClient()
     last_err: Exception | None = None
@@ -78,7 +85,7 @@ def generate_audio_roundup(items: list[dict], language: str | None = None) -> di
         try:
             return client.chat_json(
                 model=settings.audio_roundup_model,
-                system=_system_prompt(language),
+                system=_system_prompt(language, extra_prompt=extra_prompt),
                 user=f"{user}\nReturn JSON.",
                 temperature=0.6,
                 max_tokens=3000,

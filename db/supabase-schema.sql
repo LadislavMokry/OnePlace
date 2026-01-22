@@ -252,6 +252,8 @@ CREATE TABLE IF NOT EXISTS projects (
   generation_interval_hours INTEGER DEFAULT 12,
   unusable_score_threshold INTEGER DEFAULT 5,
   unusable_age_hours INTEGER DEFAULT 48,
+  video_prompt_extra TEXT,
+  audio_roundup_prompt_extra TEXT,
   last_generated_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -263,6 +265,8 @@ COMMENT ON COLUMN projects.generation_interval_hours IS 'How often to generate c
 COMMENT ON COLUMN projects.last_generated_at IS 'Last time generation ran for this project';
 COMMENT ON COLUMN projects.unusable_score_threshold IS 'Score below this becomes unusable after age window';
 COMMENT ON COLUMN projects.unusable_age_hours IS 'Age window (hours) for low-score content to be unusable';
+COMMENT ON COLUMN projects.video_prompt_extra IS 'Extra instructions appended to short-form video prompt';
+COMMENT ON COLUMN projects.audio_roundup_prompt_extra IS 'Extra instructions appended to audio roundup prompt';
 
 -- TABLE 6: sources
 -- RSS feeds, pages, or other source types per project
@@ -428,6 +432,12 @@ ALTER TABLE IF EXISTS projects
 
 ALTER TABLE IF EXISTS projects
   ADD COLUMN IF NOT EXISTS unusable_age_hours INTEGER DEFAULT 48;
+
+ALTER TABLE IF EXISTS projects
+  ADD COLUMN IF NOT EXISTS video_prompt_extra TEXT;
+
+ALTER TABLE IF EXISTS projects
+  ADD COLUMN IF NOT EXISTS audio_roundup_prompt_extra TEXT;
 
 ALTER TABLE IF EXISTS articles
   ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE SET NULL;

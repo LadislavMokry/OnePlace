@@ -274,6 +274,20 @@
           />
           <span class="small muted">hours</span>
         </div>
+        <div class="row" style="align-items: flex-start;">
+          <label class="small" style="min-width: 100px;">Video prompt</label>
+          <textarea
+            id="projectVideoPrompt"
+            placeholder="Extra instructions for short-form video scripts..."
+          ></textarea>
+        </div>
+        <div class="row" style="align-items: flex-start;">
+          <label class="small" style="min-width: 100px;">Audio prompt</label>
+          <textarea
+            id="projectAudioPrompt"
+            placeholder="Extra instructions for audio roundup scripts..."
+          ></textarea>
+        </div>
         <div class="row">
           <button class="secondary" id="saveProject">Save Settings</button>
           <button class="secondary" id="deleteProject">Delete Project</button>
@@ -419,6 +433,8 @@
         projectGenInterval: document.getElementById("projectGenInterval"),
         projectUnusableScore: document.getElementById("projectUnusableScore"),
         projectUnusableAge: document.getElementById("projectUnusableAge"),
+        projectVideoPrompt: document.getElementById("projectVideoPrompt"),
+        projectAudioPrompt: document.getElementById("projectAudioPrompt"),
         projectLabel: document.getElementById("projectLabel"),
         projectSummary: document.getElementById("projectSummary"),
         sources: document.getElementById("sources"),
@@ -536,7 +552,10 @@
         const interval = project.generation_interval_hours ?? dom.projectGenInterval.value ?? "-";
         const score = project.unusable_score_threshold ?? dom.projectUnusableScore.value ?? "-";
         const age = project.unusable_age_hours ?? dom.projectUnusableAge.value ?? "-";
-        dom.projectSummary.textContent = `Language: ${lang} · Post: ${interval} hours · Minimal score: ${score} · Unusable age: ${age} hours`;
+        const videoPrompt = project.video_prompt_extra || dom.projectVideoPrompt.value || "";
+        const audioPrompt = project.audio_roundup_prompt_extra || dom.projectAudioPrompt.value || "";
+        const promptLabel = (videoPrompt || audioPrompt) ? "custom" : "default";
+        dom.projectSummary.textContent = `Language: ${lang} - Post: ${interval} hours - Minimal score: ${score} - Unusable age: ${age} hours - Prompts: ${promptLabel}`;
       }
 
       function renderProjects() {
@@ -618,6 +637,8 @@
         dom.projectGenInterval.value = project.generation_interval_hours || "";
         dom.projectUnusableScore.value = project.unusable_score_threshold || "";
         dom.projectUnusableAge.value = project.unusable_age_hours || "";
+        dom.projectVideoPrompt.value = project.video_prompt_extra || "";
+        dom.projectAudioPrompt.value = project.audio_roundup_prompt_extra || "";
         renderProjectSummary(project);
         renderProjects();
         await Promise.all([loadSources(), loadYoutube(), loadArticles()]);
@@ -1075,13 +1096,17 @@
         const ageRaw = dom.projectUnusableAge.value.trim();
         const unusableAge = parsePositiveNumber(ageRaw, "Unusable age hours");
         if (unusableAge === undefined) return;
+        const videoPrompt = dom.projectVideoPrompt.value.trim();
+        const audioPrompt = dom.projectAudioPrompt.value.trim();
         await api(`/api/projects/${state.currentProject.id}`, {
           method: "PATCH",
           body: JSON.stringify({
             language: language || null,
             generation_interval_hours: genInterval,
             unusable_score_threshold: unusableScore,
-            unusable_age_hours: unusableAge
+            unusable_age_hours: unusableAge,
+            video_prompt_extra: videoPrompt || null,
+            audio_roundup_prompt_extra: audioPrompt || null
           })
         });
         await loadProjects();
@@ -1099,6 +1124,8 @@
         dom.projectGenInterval.value = "";
         dom.projectUnusableScore.value = "";
         dom.projectUnusableAge.value = "";
+        dom.projectVideoPrompt.value = "";
+        dom.projectAudioPrompt.value = "";
         closeInlinePanels();
         dom.articles.innerHTML = "<tr><td colspan='5' class='small muted'>No project selected.</td></tr>";
         renderProjectSummary(null);

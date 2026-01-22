@@ -270,6 +270,8 @@ def create_project(
     generation_interval_hours: int | None = None,
     unusable_score_threshold: int | None = None,
     unusable_age_hours: int | None = None,
+    video_prompt_extra: str | None = None,
+    audio_roundup_prompt_extra: str | None = None,
 ) -> dict:
     sb = get_supabase()
     row = {
@@ -286,6 +288,10 @@ def create_project(
         row["unusable_score_threshold"] = unusable_score_threshold
     if unusable_age_hours is not None:
         row["unusable_age_hours"] = unusable_age_hours
+    if video_prompt_extra and video_prompt_extra.strip():
+        row["video_prompt_extra"] = video_prompt_extra.strip()
+    if audio_roundup_prompt_extra and audio_roundup_prompt_extra.strip():
+        row["audio_roundup_prompt_extra"] = audio_roundup_prompt_extra.strip()
     res = sb.table("projects").insert(row).execute()
     return (res.data or [row])[0]
 
@@ -295,6 +301,12 @@ def update_project(project_id: str, fields: dict) -> dict:
     payload = {k: v for k, v in fields.items() if v is not None}
     if "language" in payload and payload["language"]:
         payload["language"] = payload["language"].strip()
+    if "video_prompt_extra" in payload and payload["video_prompt_extra"] is not None:
+        cleaned = str(payload["video_prompt_extra"]).strip()
+        payload["video_prompt_extra"] = cleaned or None
+    if "audio_roundup_prompt_extra" in payload and payload["audio_roundup_prompt_extra"] is not None:
+        cleaned = str(payload["audio_roundup_prompt_extra"]).strip()
+        payload["audio_roundup_prompt_extra"] = cleaned or None
     payload["updated_at"] = _now_iso()
     res = sb.table("projects").update(payload).eq("id", project_id).execute()
     return (res.data or [payload])[0]
