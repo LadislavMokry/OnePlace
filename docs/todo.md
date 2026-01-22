@@ -34,6 +34,7 @@ Legend:
 ## Ingestion & Pipeline
 - [ ] Seed projects + sources in Admin UI
 - [ ] Check source access for login walls
+- [ ] Note: Reddit sources now require an auth cookie to avoid 403 blocking (set via Source "Login" config).
 - [ ] Run pipeline per project (scrape -> ingest -> extract -> judge -> dedupe/unusable)
 - [ ] Verify `articles.processed` + `articles.scored`
 - [ ] Verify `posts` for video variants + `selected = true`

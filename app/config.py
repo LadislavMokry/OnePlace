@@ -35,7 +35,12 @@ class Settings(BaseModel):
     audio_roundup_voice_b: str = "nova"
     media_output_dir: str = "media_out"
     ffmpeg_path: str | None = None
+    tts_provider: str = "openai"
     tts_model: str = "gpt-4o-mini-tts"
+    tts_max_chars: int = 3500
+    inworld_api_key: str | None = None
+    inworld_tts_base_url: str = "https://api.inworld.ai"
+    inworld_tts_model: str = "inworld-tts-1.5-max"
     asr_model: str = "whisper-1"
     image_model: str = "gpt-image-1"
     enable_image_generation: bool = False
@@ -63,6 +68,10 @@ def get_settings() -> Settings:
         raise RuntimeError(
             "Missing SUPABASE_URL or SUPABASE_KEY. Set them in the environment."
         )
+    tts_provider = os.environ.get("TTS_PROVIDER", "openai")
+    tts_max_chars = int(os.environ.get("TTS_MAX_CHARS", "3500"))
+    if tts_provider.lower() == "inworld" and tts_max_chars > 2000:
+        tts_max_chars = 2000
     return Settings(
         supabase_url=supabase_url,
         supabase_key=supabase_key,
@@ -92,7 +101,12 @@ def get_settings() -> Settings:
         audio_roundup_voice_b=os.environ.get("AUDIO_ROUNDUP_VOICE_B", "nova"),
         media_output_dir=os.environ.get("MEDIA_OUTPUT_DIR", "media_out"),
         ffmpeg_path=os.environ.get("FFMPEG_PATH"),
+        tts_provider=tts_provider,
         tts_model=os.environ.get("TTS_MODEL", "gpt-4o-mini-tts"),
+        tts_max_chars=tts_max_chars,
+        inworld_api_key=os.environ.get("INWORLD_API_KEY") or os.environ.get("INWORLD_BASE64_KEY"),
+        inworld_tts_base_url=os.environ.get("INWORLD_TTS_BASE_URL", "https://api.inworld.ai"),
+        inworld_tts_model=os.environ.get("INWORLD_TTS_MODEL", "inworld-tts-1.5-max"),
         asr_model=os.environ.get("ASR_MODEL", "whisper-1"),
         image_model=os.environ.get("IMAGE_MODEL", "gpt-image-1"),
         enable_image_generation=os.environ.get("ENABLE_IMAGE_GENERATION", "false").lower()

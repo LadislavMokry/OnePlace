@@ -12,6 +12,18 @@ SUPABASE_URL=...
 SUPABASE_KEY=...
 ```
 
+Optional (TTS providers):
+
+```
+ENABLE_TTS=true
+TTS_PROVIDER=openai     # or "inworld"
+TTS_MAX_CHARS=2000      # Inworld max chars; OpenAI can use 3500+
+INWORLD_API_KEY=...     # Base64 API key from Inworld portal (for TTS)
+INWORLD_BASE64_KEY=...  # Alias if you stored the key under this name
+INWORLD_TTS_MODEL=inworld-tts-1.5-max
+INWORLD_TTS_BASE_URL=https://api.inworld.ai
+```
+
 ## Install dependencies
 
 ```

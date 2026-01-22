@@ -7,9 +7,11 @@ from app.ai.tts import generate_voiceover
 from app.config import get_settings
 
 
-def _chunks(text: str, max_chars: int = 3500) -> Iterable[str]:
+def _chunks(text: str, max_chars: int | None = None) -> Iterable[str]:
     if not text:
         return []
+    if max_chars is None:
+        max_chars = get_settings().tts_max_chars
     start = 0
     while start < len(text):
         end = min(len(text), start + max_chars)
