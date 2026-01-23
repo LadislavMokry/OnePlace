@@ -235,3 +235,39 @@ Last updated: 2026-01-22
   - `systemctl list-timers --all | grep oneplace`
   - `systemctl status oneplace-*.service --no-pager`
   - `journalctl -u oneplace-*.service --since "24 hours ago" --no-pager`
+
+---
+
+## Summary of this session (2026-01-23)
+- **Podcast RSS + R2 publishing implemented**:
+  - New R2 uploader + RSS generator + publish flow (audio + artwork + RSS).
+  - New worker command: `python -m app.worker publish-podcast --all-projects`.
+  - Podcast image prompts stored per project in `projects.podcast_image_prompt`.
+  - Static project artwork is generated once and reused for all episodes.
+- **R2 bucket** created: `oneplace-podcasts` with public base URL:
+  - `https://pub-6bc969ff45954c90afbbfc3610c4592e.r2.dev`
+- **RSS URLs (submit once to Apple + Spotify):**
+  - `.../podcasts/celebrities-entertainment/rss.xml`
+  - `.../podcasts/tv-streaming-recaps/rss.xml`
+  - `.../podcasts/sports-results-storylines/rss.xml`
+  - `.../podcasts/viral-human-interest/rss.xml`
+  - `.../podcasts/nostalgia-pop-culture-history/rss.xml`
+- **Audio roundup length extended**: target 10–15 minutes; default story count set to 8 (env override).
+- **New systemd timer added** for podcast publishing:
+  - `oneplace-podcast-publish.timer` (13:45 UTC).
+- **Timers shifted to US-morning cadence (UTC):**
+  - generate 12:30
+  - second-judge 12:45
+  - audio-roundup 13:15
+  - render-roundup 13:30
+  - podcast-publish 13:45
+  - youtube-upload 14:00
+  - youtube-analytics 14:15
+- **Manual validation**: RSS reachable (200 OK) from server; publish succeeded.
+- **RSS submitted**: Feeds submitted to Apple Podcasts Connect and Spotify for Podcasters.
+
+## Notes / reminders
+- Apple/Spotify pull RSS; they do **not** accept pushes. Submit each RSS once.
+- Increase `REQUEST_TIMEOUT` (e.g., 120s) for 10–15 minute scripts to avoid OpenAI timeouts.
+- `podcast_image_generated=5 missing_prompt=1` indicates an extra `f1` project without metadata.
+- **YouTube channels**: 4 additional channels still need to be created + OAuth tokens stored per project.
