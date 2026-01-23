@@ -272,6 +272,7 @@ def create_project(
     unusable_age_hours: int | None = None,
     video_prompt_extra: str | None = None,
     audio_roundup_prompt_extra: str | None = None,
+    podcast_image_prompt: str | None = None,
 ) -> dict:
     sb = get_supabase()
     row = {
@@ -292,6 +293,8 @@ def create_project(
         row["video_prompt_extra"] = video_prompt_extra.strip()
     if audio_roundup_prompt_extra and audio_roundup_prompt_extra.strip():
         row["audio_roundup_prompt_extra"] = audio_roundup_prompt_extra.strip()
+    if podcast_image_prompt and podcast_image_prompt.strip():
+        row["podcast_image_prompt"] = podcast_image_prompt.strip()
     res = sb.table("projects").insert(row).execute()
     return (res.data or [row])[0]
 
@@ -307,9 +310,55 @@ def update_project(project_id: str, fields: dict) -> dict:
     if "audio_roundup_prompt_extra" in payload and payload["audio_roundup_prompt_extra"] is not None:
         cleaned = str(payload["audio_roundup_prompt_extra"]).strip()
         payload["audio_roundup_prompt_extra"] = cleaned or None
+    if "podcast_image_prompt" in payload and payload["podcast_image_prompt"] is not None:
+        cleaned = str(payload["podcast_image_prompt"]).strip()
+        payload["podcast_image_prompt"] = cleaned or None
     payload["updated_at"] = _now_iso()
     res = sb.table("projects").update(payload).eq("id", project_id).execute()
     return (res.data or [payload])[0]
+
+
+def get_project_podcast_image_prompt(project_id: str) -> str | None:
+    sb = get_supabase()
+    resp = (
+        sb.table("projects")
+        .select("podcast_image_prompt")
+        .eq("id", project_id)
+        .limit(1)
+        .execute()
+    )
+    data = resp.data or []
+    if not data:
+        return None
+    return data[0].get("podcast_image_prompt")
+
+
+def resolve_project_id_for_post(post_id: str) -> str | None:
+    sb = get_supabase()
+    usage = (
+        sb.table("article_usage")
+        .select("article_id")
+        .eq("post_id", post_id)
+        .limit(1)
+        .execute()
+    )
+    usage_rows = usage.data or []
+    if not usage_rows:
+        return None
+    article_id = usage_rows[0].get("article_id")
+    if not article_id:
+        return None
+    article = (
+        sb.table("articles")
+        .select("project_id")
+        .eq("id", article_id)
+        .limit(1)
+        .execute()
+    )
+    rows = article.data or []
+    if not rows:
+        return None
+    return rows[0].get("project_id")
 
 
 def delete_project(project_id: str) -> None:

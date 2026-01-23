@@ -4,11 +4,17 @@ import time
 from pathlib import Path
 
 from .config import get_settings
-from .admin import ingest_source_items, list_projects, scrape_project
+from .admin import (
+    ingest_source_items,
+    list_projects,
+    scrape_project,
+    get_project_podcast_image_prompt,
+    resolve_project_id_for_post,
+)
 from .media.audio import render_audio_roundup
-from .media.roundup_video import render_audio_roundup_video
+from .media.roundup_video import render_audio_roundup_video, ensure_project_podcast_image
 from .media.short_video import render_short_video
-from .media.paths import roundup_audio_path, roundup_video_path, short_video_path
+from .media.paths import podcast_image_path, roundup_audio_path, roundup_video_path, short_video_path
 from .youtube_upload import upload_latest_roundup_for_project, upload_latest_roundups_all
 from .youtube_analytics import fetch_youtube_analytics_for_project, fetch_youtube_analytics_all
 from .youtube_video_metrics import (
@@ -93,6 +99,18 @@ def main() -> None:
         help="Render latest audio roundup for every project",
     )
     sub.add_parser("render-audio-roundup-video", help="Render latest audio roundup to MP4")
+    podcast_image = sub.add_parser("podcast-image", help="Generate reusable podcast image per project")
+    podcast_image.add_argument("--project-id", type=str, default=None, help="Project ID filter")
+    podcast_image.add_argument(
+        "--all-projects",
+        action="store_true",
+        help="Generate podcast images for every project",
+    )
+    podcast_image.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Regenerate the podcast image even if it already exists",
+    )
     sub.add_parser("render-video", help="Render latest selected video to MP4")
     yt_upload = sub.add_parser("youtube-upload", help="Upload latest audio roundup video to YouTube")
     yt_upload.add_argument("--project-id", type=str, default=None, help="Project ID filter")
@@ -241,7 +259,11 @@ def main() -> None:
         content = row.get("content") or {}
         out_dir = Path(settings.media_output_dir)
         out_path = roundup_video_path(out_dir, row["id"])
-        render_audio_roundup_video(content, row["id"], out_path)
+        project_id = resolve_project_id_for_post(row["id"])
+        project_prompt = get_project_podcast_image_prompt(project_id) if project_id else None
+        render_audio_roundup_video(
+            content, row["id"], out_path, project_id=project_id, project_prompt=project_prompt
+        )
         print(f"audio_roundup_video_rendered=1 path={out_path}")
         return
     if args.command == "render-video":
@@ -256,6 +278,33 @@ def main() -> None:
         render_short_video(content, out_path)
         update_post_media(row["id"], str(out_path))
         print(f"video_rendered=1 path={out_path}")
+        return
+    if args.command == "podcast-image":
+        settings = get_settings()
+        out_dir = Path(settings.media_output_dir)
+        targets: list[str] = []
+        if args.all_projects or not args.project_id:
+            projects = list_projects()
+            targets = [p.get("id") for p in projects if p.get("id")]
+        else:
+            targets = [args.project_id]
+        generated = 0
+        missing = 0
+        failed = 0
+        for project_id in targets:
+            prompt = get_project_podcast_image_prompt(project_id)
+            if not prompt:
+                missing += 1
+                continue
+            image_path = podcast_image_path(out_dir, project_id)
+            if args.refresh and image_path.exists():
+                image_path.unlink()
+            image = ensure_project_podcast_image(prompt, image_path, allow_placeholder=False)
+            if not image:
+                failed += 1
+                continue
+            generated += 1
+        print(f"podcast_image_generated={generated} missing_prompt={missing} failed={failed}")
         return
     if args.command == "youtube-upload":
         if args.all_projects:

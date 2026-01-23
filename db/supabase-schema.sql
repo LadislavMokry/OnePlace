@@ -254,6 +254,7 @@ CREATE TABLE IF NOT EXISTS projects (
   unusable_age_hours INTEGER DEFAULT 48,
   video_prompt_extra TEXT,
   audio_roundup_prompt_extra TEXT,
+  podcast_image_prompt TEXT,
   last_generated_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -267,6 +268,7 @@ COMMENT ON COLUMN projects.unusable_score_threshold IS 'Score below this becomes
 COMMENT ON COLUMN projects.unusable_age_hours IS 'Age window (hours) for low-score content to be unusable';
 COMMENT ON COLUMN projects.video_prompt_extra IS 'Extra instructions appended to short-form video prompt';
 COMMENT ON COLUMN projects.audio_roundup_prompt_extra IS 'Extra instructions appended to audio roundup prompt';
+COMMENT ON COLUMN projects.podcast_image_prompt IS 'Prompt used to generate a single, reusable podcast image per project';
 
 -- TABLE 6: sources
 -- RSS feeds, pages, or other source types per project
@@ -451,6 +453,9 @@ ALTER TABLE IF EXISTS projects
 
 ALTER TABLE IF EXISTS projects
   ADD COLUMN IF NOT EXISTS audio_roundup_prompt_extra TEXT;
+
+ALTER TABLE IF EXISTS projects
+  ADD COLUMN IF NOT EXISTS podcast_image_prompt TEXT;
 
 -- Ensure rotation row exists for TTS combos
 INSERT INTO tts_rotation (id, counter)

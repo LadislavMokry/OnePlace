@@ -10,6 +10,7 @@ from app.ai.image import generate_image
 from app.config import get_settings
 from app.media.audio import render_audio_roundup
 from app.media.video import assemble_video
+from app.media.paths import podcast_image_path
 
 
 def _download_image(url: str, path: Path) -> None:
@@ -23,6 +24,12 @@ def _write_image_from_b64(data: str, path: Path) -> None:
 
 
 def _resize_to_landscape(path: Path, size: tuple[int, int] = (1280, 720)) -> None:
+    img = Image.open(path)
+    img = img.convert("RGB")
+    img = ImageOps.fit(img, size, Image.LANCZOS)
+    img.save(path)
+
+def _resize_to_square(path: Path, size: tuple[int, int] = (1024, 1024)) -> None:
     img = Image.open(path)
     img = img.convert("RGB")
     img = ImageOps.fit(img, size, Image.LANCZOS)
@@ -87,7 +94,38 @@ def ensure_roundup_image(prompt: str | None, output_path: Path, allow_placeholde
     return output_path
 
 
-def render_audio_roundup_video(content: dict, post_id: str, output_path: Path) -> Path:
+def ensure_project_podcast_image(
+    prompt: str | None, output_path: Path, allow_placeholder: bool = False
+) -> Path | None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if output_path.exists():
+        return output_path
+    settings = get_settings()
+    prompt_text = (prompt or "").strip()
+    if prompt_text and settings.enable_image_generation:
+        try:
+            result = generate_image(prompt_text, size="1024x1024", quality="low")
+            if result.startswith("http"):
+                _download_image(result, output_path)
+            else:
+                _write_image_from_b64(result, output_path)
+            _resize_to_square(output_path)
+            return output_path
+        except Exception as exc:
+            print(f"project_image_failed error={exc}")
+    if not allow_placeholder:
+        return None
+    _create_placeholder(output_path, prompt_text or "Podcast")
+    return output_path
+
+
+def render_audio_roundup_video(
+    content: dict,
+    post_id: str,
+    output_path: Path,
+    project_id: str | None = None,
+    project_prompt: str | None = None,
+) -> Path:
     settings = get_settings()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -98,9 +136,16 @@ def render_audio_roundup_video(content: dict, post_id: str, output_path: Path) -
         voice_b = content.get("tts_voice_b")
         render_audio_roundup(dialogue, audio_path, voice_a=voice_a, voice_b=voice_b)
 
-    image_path = output_path.parent / "image.png"
-    prompt = content.get("image_prompt") or content.get("imagePrompt")
-    image = ensure_roundup_image(prompt, image_path, allow_placeholder=True)
+    image = None
+    if project_id and project_prompt:
+        base_dir = Path(settings.media_output_dir)
+        image = ensure_project_podcast_image(
+            project_prompt, podcast_image_path(base_dir, project_id), allow_placeholder=True
+        )
+    if not image:
+        image_path = output_path.parent / "image.png"
+        prompt = content.get("image_prompt") or content.get("imagePrompt")
+        image = ensure_roundup_image(prompt, image_path, allow_placeholder=True)
     if not image:
         raise RuntimeError("Unable to generate or create a roundup image")
 

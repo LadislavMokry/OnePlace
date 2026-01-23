@@ -8,11 +8,15 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-from app.admin import list_projects
+from app.admin import list_projects, get_project_podcast_image_prompt
 from app.config import get_settings
 from app.db import get_supabase
-from app.media.paths import roundup_audio_path, roundup_image_path, roundup_video_path
-from app.media.roundup_video import ensure_roundup_image, render_audio_roundup_video
+from app.media.paths import podcast_image_path, roundup_audio_path, roundup_image_path, roundup_video_path
+from app.media.roundup_video import (
+    ensure_project_podcast_image,
+    ensure_roundup_image,
+    render_audio_roundup_video,
+)
 from app.pipeline import fetch_latest_audio_roundup_for_project
 
 
@@ -133,7 +137,7 @@ def _default_description(project_name: str, language: str | None, subscribe_url:
     return f"{base}\n\n{cta}"
 
 
-def _ensure_roundup_assets(post: dict) -> tuple[Path, Path, dict]:
+def _ensure_roundup_assets(post: dict, project_id: str | None = None) -> tuple[Path, Path, dict]:
     settings = get_settings()
     content = post.get("content") or {}
     if isinstance(content, str):
@@ -144,9 +148,18 @@ def _ensure_roundup_assets(post: dict) -> tuple[Path, Path, dict]:
 
     out_dir = Path(settings.media_output_dir)
     video_path = roundup_video_path(out_dir, post["id"])
+    project_prompt = get_project_podcast_image_prompt(project_id) if project_id else None
     if not video_path.exists():
-        render_audio_roundup_video(content, post["id"], video_path)
+        render_audio_roundup_video(
+            content, post["id"], video_path, project_id=project_id, project_prompt=project_prompt
+        )
     image_path = roundup_image_path(out_dir, post["id"])
+    if project_id and project_prompt:
+        project_image_path = podcast_image_path(out_dir, project_id)
+        if not project_image_path.exists():
+            ensure_project_podcast_image(project_prompt, project_image_path, allow_placeholder=True)
+        if project_image_path.exists():
+            image_path = project_image_path
     if not image_path.exists():
         prompt = content.get("image_prompt") or content.get("imagePrompt")
         ensure_roundup_image(prompt, image_path, allow_placeholder=True)
@@ -231,7 +244,7 @@ def upload_latest_roundup_for_project(project_id: str) -> dict:
     creds = _credentials(account["refresh_token"], scopes)
     youtube = build("youtube", "v3", credentials=creds)
 
-    video_path, image_path, content = _ensure_roundup_assets(post)
+    video_path, image_path, content = _ensure_roundup_assets(post, project_id=project_id)
     language = _project_language(project_id) or "en"
     project_name = _project_name(project_id)
 

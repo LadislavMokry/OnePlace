@@ -26,6 +26,8 @@ from .admin import (
     update_project,
     update_source,
     upsert_youtube_account,
+    get_project_podcast_image_prompt,
+    resolve_project_id_for_post,
 )
 from .config import get_settings
 from .db import get_supabase
@@ -68,6 +70,7 @@ class ProjectCreate(BaseModel):
     unusable_age_hours: int | None = None
     video_prompt_extra: str | None = None
     audio_roundup_prompt_extra: str | None = None
+    podcast_image_prompt: str | None = None
 
 
 class ProjectUpdate(BaseModel):
@@ -80,6 +83,7 @@ class ProjectUpdate(BaseModel):
     unusable_age_hours: int | None = None
     video_prompt_extra: str | None = None
     audio_roundup_prompt_extra: str | None = None
+    podcast_image_prompt: str | None = None
 
 
 class SourceCreate(BaseModel):
@@ -183,6 +187,7 @@ def api_create_project(payload: ProjectCreate) -> dict:
         payload.unusable_age_hours,
         payload.video_prompt_extra,
         payload.audio_roundup_prompt_extra,
+        payload.podcast_image_prompt,
     )
 
 
@@ -366,7 +371,9 @@ def api_render_audio_roundup_video(post_id: str) -> dict:
     settings = get_settings()
     out_dir = Path(settings.media_output_dir)
     out_path = roundup_video_path(out_dir, post_id)
-    render_audio_roundup_video(content, post_id, out_path)
+    project_id = resolve_project_id_for_post(post_id)
+    project_prompt = get_project_podcast_image_prompt(project_id) if project_id else None
+    render_audio_roundup_video(content, post_id, out_path, project_id=project_id, project_prompt=project_prompt)
     url = f"/api/audio-roundup/{post_id}/video"
     return {"status": "ok", "url": url}
 
@@ -402,14 +409,26 @@ def api_get_audio_roundup_image(post_id: str, refresh: bool = Query(False)) -> F
     settings = get_settings()
     out_dir = Path(settings.media_output_dir)
     out_path = roundup_image_path(out_dir, post_id)
+    project_id = resolve_project_id_for_post(post_id)
+    project_prompt = get_project_podcast_image_prompt(project_id) if project_id else None
     if refresh:
         if out_path.exists():
             out_path.unlink()
         legacy_path = out_dir / f"audio_roundup_{post_id}.png"
         if legacy_path.exists():
             legacy_path.unlink()
-    prompt = content.get("image_prompt") or content.get("imagePrompt")
-    image_path = ensure_roundup_image(prompt, out_path, allow_placeholder=False)
+    image_path = None
+    if project_id and project_prompt:
+        from .media.paths import podcast_image_path
+        from .media.roundup_video import ensure_project_podcast_image
+
+        project_path = podcast_image_path(out_dir, project_id)
+        if refresh and project_path.exists():
+            project_path.unlink()
+        image_path = ensure_project_podcast_image(project_prompt, project_path, allow_placeholder=False)
+    if not image_path:
+        prompt = content.get("image_prompt") or content.get("imagePrompt")
+        image_path = ensure_roundup_image(prompt, out_path, allow_placeholder=False)
     if not image_path or not image_path.exists():
         legacy_path = out_dir / f"audio_roundup_{post_id}.png"
         if not legacy_path.exists():

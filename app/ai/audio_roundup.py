@@ -21,7 +21,7 @@ def _system_prompt(language: str | None, extra_prompt: str | None = None) -> str
     language_label = _language_label(language)
     base = (
         f"You are a podcast writer. Write the script in {language_label}. "
-        "Create a 5-7 minute audio roundup script for two hosts "
+        "Create a 10-15 minute audio roundup script for two hosts "
         "(host_a male, host_b female). You will receive items with title, "
         "summary, and full content. Use the full content when available "
         "(content may be truncated to fit limits). "
@@ -77,7 +77,7 @@ def generate_audio_roundup(
             )
         user = {
             "stories": stories,
-            "length_minutes": "5-7",
+            "length_minutes": "10-15",
             "hosts": ["host_a", "host_b"],
             "structure": "teaser_rundown_then_deep_dive",
             "use_all_stories": True,
@@ -88,7 +88,7 @@ def generate_audio_roundup(
                 system=_system_prompt(language, extra_prompt=extra_prompt),
                 user=f"{user}\nReturn JSON.",
                 temperature=0.6,
-                max_tokens=3000,
+                max_tokens=4500,
                 reasoning_effort="minimal",
             )
         except RuntimeError as exc:

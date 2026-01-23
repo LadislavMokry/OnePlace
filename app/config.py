@@ -29,7 +29,7 @@ class Settings(BaseModel):
     generation_variants: int = 3
     video_min_score: int = 6
     audio_roundup_model: str = "gpt-5-mini"
-    audio_roundup_size: int = 5
+    audio_roundup_size: int = 8
     audio_roundup_hours: int = 24
     audio_roundup_voice_a: str = "onyx"
     audio_roundup_voice_b: str = "nova"

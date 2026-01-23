@@ -23,3 +23,7 @@ def short_video_dir(base_dir: Path, post_id: str) -> Path:
 
 def short_video_path(base_dir: Path, post_id: str) -> Path:
     return short_video_dir(base_dir, post_id) / "video.mp4"
+
+
+def podcast_image_path(base_dir: Path, project_id: str) -> Path:
+    return base_dir / "podcast" / project_id / "image.png"
