@@ -5,7 +5,7 @@ This repo uses a Python-first architecture (FastAPI + worker scripts) for manual
 
 - Python app: `app/` (FastAPI intake API + worker scripts).
 - Database schema: `db/supabase-schema.sql` (tables for articles, posts, metrics).
-- Guides and specs: `docs/SETUP-GUIDE.md`, `docs/slovak-gossip-automation-spec (1).md`, `docs/implementation-plan.md`, `docs/todo.md`, `docs/manual-intake.md`.
+- Guides and specs: `docs/implementation-plan.md`, `docs/python-architecture.md`, `docs/python-spec.md`, `docs/todo.md`, `docs/manual-intake.md`, `docs/startup-guide.md`, `docs/testing-checklist.md`.
 
 ## Product Goal (Important Context)
 - Each project should support a funnel: short-form (TikTok-style) content leads users to a longer-form daily podcast (7-10 minutes).
@@ -45,4 +45,4 @@ There is no build step or test runner in this repo.
 - Store secrets in `.env` or `.env.local`; never commit API keys.
 - `.env` / `.env.local` are auto-loaded by the Python config.
 - Use the Supabase anon/public key for the API; reserve service_role for admin tasks.
-- See `docs/SETUP-GUIDE.md` for credential setup and safety notes.
+- See `docs/startup-guide.md` for credential setup and safety notes.
